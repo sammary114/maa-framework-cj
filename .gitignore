@@ -1,0 +1,23 @@
+# Cangjie build artifacts
+build/
+target/
+*.bin
+*.dylib
+*.so
+*.dll
+
+# IDE and Editor
+.idea/
+.vscode/
+*.swp
+*~
+
+# Test & Debug outputs
+debug/
+log/
+temp/
+*.log
+
+# Third-party downloaded headers or binaries
+deps/
+bin/
