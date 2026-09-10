@@ -199,7 +199,7 @@ cjpm clean
 
 ```powershell
 # Windows (PowerShell)
-$env:PATH = "$PWD\deps\bin;C:\Users\sammary\.cjv\bin;$env:PATH"
+$env:PATH = "$PWD\deps\bin;$env:PATH"
 cjpm test --show-all-output --no-progress
 ```
 
@@ -213,7 +213,7 @@ cjpm test --show-all-output --no-progress
 
 ```powershell
 # Windows (PowerShell)
-$env:PATH = "$PWD\deps\bin;C:\Users\sammary\.cjv\bin;$env:PATH"
+$env:PATH = "$PWD\deps\bin;$env:PATH"
 cd examples/quickstart
 cjpm run
 ```
@@ -311,7 +311,7 @@ All Cangjie bindings strictly adhere to the official [MaaFramework Chapter 4.2 S
 - **Test Framework**: Cangjie standard unit test framework (`std.unittest`) run via `cjpm test`.
 - **Running Tests**:
   ```powershell
-  $env:PATH = "$PWD\deps\bin;C:\Users\sammary\.cjv\bin;$env:PATH"
+  $env:PATH = "$PWD\deps\bin;$env:PATH"
   cjpm test --show-all-output --no-progress
   ```
 - **Test Coverage**:

@@ -32,8 +32,9 @@ if (-not (Get-Command "cjbind" -ErrorAction SilentlyContinue)) {
 # Detect optional system clang include directories (for stdint.h on Windows)
 $extraClangArgs = @()
 $candPaths = @(
-    "C:\Program Files\Huawei\DevEco Studio\sdk\default\openharmony\native\llvm\lib\clang\15.0.4\include",
-    "C:\Program Files\LLVM\lib\clang\*\include"
+    "$env:ProgramFiles\Huawei\DevEco Studio\sdk\default\openharmony\native\llvm\lib\clang\*\include",
+    "$env:ProgramFiles\LLVM\lib\clang\*\include",
+    "${env:ProgramFiles(x86)}\LLVM\lib\clang\*\include"
 )
 foreach ($cand in $candPaths) {
     $found = Resolve-Path $cand -ErrorAction SilentlyContinue

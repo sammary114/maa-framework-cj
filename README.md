@@ -95,7 +95,7 @@ main() {
 ./tools/gen_bindings.ps1
 
 # 3. 运行全量单元测试
-$env:PATH = "$PWD\deps\bin;C:\Users\sammary\.cjv\bin;$env:PATH"
+$env:PATH = "$PWD\deps\bin;$env:PATH"
 cjpm test --show-all-output --no-progress
 ```
 
