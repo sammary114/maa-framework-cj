@@ -2,7 +2,7 @@
 
 [MaaFramework](https://github.com/MaaXYZ/MaaFramework) 的 **Cangjie (仓颉)** 语言绑定 SDK 框架。
 
-本框架遵循 **MaaFramework 4.2+ / 5.x 标准化接口设计规范**，为仓颉开发者提供类型安全、面向对象、内存安全的自动化测试与图像识别开发体验。
+本框架遵循 **MaaFramework 官方文档《4.2 标准化接口设计》规范**，为仓颉开发者提供类型安全、面向对象、内存安全的自动化测试与图像识别开发体验。
 
 > **🚀 极简集成**：下游应用只需在 `cjpm.toml` 中引入依赖并 `import maa.*`，即可调用全套 MaaFramework 核心能力。
 

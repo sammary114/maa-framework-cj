@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-`maa-framework-cj` is the official **Cangjie (仓颉)** language binding SDK for **[MaaFramework](https://github.com/MaaXYZ/MaaFramework)** (targeting MaaFramework 4.2+ / 5.x C API specifications).
+`maa-framework-cj` is the official **Cangjie (仓颉)** language binding SDK for **[MaaFramework](https://github.com/MaaXYZ/MaaFramework)** (following the official **Chapter 4.2 Standardized Interface Design** specification).
 
 The project wraps the high-performance native C automation core into safe, idiomatic, object-oriented Cangjie abstractions. It provides:
 - **Object-Oriented Design**: High-level OOP domain abstractions (`Resource` / `MaaResource`, `Controller` / `AdbController` / `Win32Controller`, `Tasker`, `Instance`).
@@ -255,9 +255,9 @@ cjpm run
 
 ---
 
-## MaaFramework 4.2 Standardized Interface Design Rules
+## MaaFramework Chapter 4.2 Standardized Interface Design Rules
 
-All Cangjie bindings strictly adhere to the [MaaFramework 4.2 Standardized Interface Design specification](https://github.com/MaaXYZ/MaaFramework/blob/main/docs/zh_cn/4.2-%E6%A0%87%E5%87%86%E5%8C%96%E6%8E%A5%E5%8F%A3%E8%AE%BE%E8%AE%A1.md):
+All Cangjie bindings strictly adhere to the official [MaaFramework Chapter 4.2 Standardized Interface Design specification](https://github.com/MaaXYZ/MaaFramework/blob/main/docs/zh_cn/4.2-%E6%A0%87%E5%87%86%E5%8C%96%E6%8E%A5%E5%8F%A3%E8%AE%BE%E8%AE%A1.md):
 
 1. **Object-Oriented Encapsulation**: `MaaTasker`, `MaaResource`, and `MaaController` are represented as OOP classes rather than procedural handles. APIs returning entities (e.g. `MaaContextGetTasker`) return wrapped class instances.
 2. **Asynchronous Task (`Job`) Encapsulation**: Asynchronous IDs (`MaaTaskId`, `MaaCtrlId`, `MaaResId`) are NEVER directly exposed to users; they are encapsulated into `Job` classes (`TaskJob`, `ResJob`, `CtrlJob`) exposing `.wait()`, `.status()`, `.get()`.
@@ -301,7 +301,7 @@ All Cangjie bindings strictly adhere to the [MaaFramework 4.2 Standardized Inter
 
 - **Cangjie Compiler & SDK**: Cangjie SDK `1.0.5+` (`cjc` compiler and `cjpm` package manager, LTS 1.0.5 `cjnative`).
 - **FFI Binding Tool**: `cjbind` version `0.3.6+` (installed to `$USERPROFILE/.cjpm/bin/cjbind.exe`) with LLVM support.
-- **Native Runtime Binaries**: MaaFramework 4.2+ / 5.x shared libraries (`MaaFramework`, `MaaToolkit`, etc. `.dll` / `.so` / `.dylib`) in `deps/bin` or system dynamic library search paths (`PATH` on Windows, `LD_LIBRARY_PATH` on Linux, `DYLD_LIBRARY_PATH` on macOS).
+- **Native Runtime Binaries**: MaaFramework v5.x shared libraries (`MaaFramework`, `MaaToolkit`, etc. `.dll` / `.so` / `.dylib`) in `deps/bin` or system dynamic library search paths (`PATH` on Windows, `LD_LIBRARY_PATH` on Linux, `DYLD_LIBRARY_PATH` on macOS).
 - **Supported Target Platforms**: Windows x64, Linux x64/aarch64, macOS x64/arm64.
 
 ---
