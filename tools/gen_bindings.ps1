@@ -16,24 +16,48 @@ if ([string]::IsNullOrWhiteSpace($MaaIncludeDir)) {
     }
 }
 
+# Locate cjbind executable
+$cjbindCmd = "cjbind"
+if (-not (Get-Command "cjbind" -ErrorAction SilentlyContinue)) {
+    $userCjbind = Join-Path $env:USERPROFILE ".cjpm\bin\cjbind.exe"
+    if (Test-Path $userCjbind) {
+        $cjbindCmd = $userCjbind
+    } else {
+        Write-Host "Error: cjbind not found in PATH or $userCjbind" -ForegroundColor Red
+        Write-Host "Please install cjbind first (e.g. irm https://cjbind.zxilly.dev/install.ps1 | iex)" -ForegroundColor Yellow
+        exit 1
+    }
+}
+
+# Detect optional system clang include directories (for stdint.h on Windows)
+$extraClangArgs = @()
+$candPaths = @(
+    "C:\Program Files\Huawei\DevEco Studio\sdk\default\openharmony\native\llvm\lib\clang\15.0.4\include",
+    "C:\Program Files\LLVM\lib\clang\*\include"
+)
+foreach ($cand in $candPaths) {
+    $found = Resolve-Path $cand -ErrorAction SilentlyContinue
+    if ($found) {
+        $extraClangArgs += "-I$($found.Path)"
+        break
+    }
+}
+
 New-Item -ItemType Directory -Force -Path "src/ffi" | Out-Null
 
-Write-Host "Generating maa_core FFI bindings..." -ForegroundColor Cyan
-cjbind -p maa.ffi `
-       --auto-cstring `
-       -o src/ffi/maa_core.cj `
-       "$MaaIncludeDir/MaaFramework/MaaAPI.h" `
-       -- -I"$MaaIncludeDir"
-
-Write-Host "Generating maa_toolkit FFI bindings..." -ForegroundColor Cyan
 $toolkitHeader = if (Test-Path "$MaaIncludeDir/MaaToolkit/MaaToolkitAPI.h") {
     "$MaaIncludeDir/MaaToolkit/MaaToolkitAPI.h"
 } else {
     "$MaaIncludeDir/MaaFramework/MaaToolkitAPI.h"
 }
-cjbind -p maa.ffi `
+
+Write-Host "Generating unified maa.ffi bindings (MaaAPI + MaaToolkitAPI)..." -ForegroundColor Cyan
+& $cjbindCmd -p maa.ffi `
        --auto-cstring `
-       -o src/ffi/maa_toolkit.cj `
+       --make-func-wrapper `
+       --func-wrapper-suffix "_wrap" `
+       -o src/ffi/maa_ffi.cj `
+       "$MaaIncludeDir/MaaFramework/MaaAPI.h" `
        "$toolkitHeader" `
-       -- -I"$MaaIncludeDir"
-Write-Host "FFI generation completed! Output directory: src/ffi/" -ForegroundColor Green
+       -- -I"$MaaIncludeDir" @extraClangArgs
+Write-Host "FFI generation completed! Output: src/ffi/maa_ffi.cj" -ForegroundColor Green

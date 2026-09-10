@@ -1,0 +1,11 @@
+[package]
+cjc-version = "1.0.5"
+name = "quickstart"
+version = "0.1.0"
+output-type = "executable"
+src-dir = "."
+target-dir = "build"
+link-option = "-L ../../deps/lib -l MaaFramework -l MaaToolkit"
+
+[dependencies]
+maa = { path = "../../" }
