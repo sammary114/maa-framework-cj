@@ -72,7 +72,8 @@ public class Tasker {
         }
         let id = unsafe {
             let cEntry = LibC.mallocCString(entry)
-            let cOverride = LibC.mallocCString(pipelineOverride)
+            let overrideStr = if (pipelineOverride.isEmpty()) { "{}" } else { pipelineOverride }
+            let cOverride = LibC.mallocCString(overrideStr)
             let taskId = MaaTaskerPostTask_wrap(this.handle, cEntry, cOverride)
             LibC.free(cEntry)
             LibC.free(cOverride)

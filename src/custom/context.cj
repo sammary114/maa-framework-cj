@@ -19,7 +19,8 @@ public class Context {
         }
         unsafe {
             let cEntry = LibC.mallocCString(entry)
-            let cOverride = LibC.mallocCString(pipelineOverride)
+            let overrideStr = if (pipelineOverride.isEmpty()) { "{}" } else { pipelineOverride }
+            let cOverride = LibC.mallocCString(overrideStr)
             let res = MaaContextRunTask_wrap(this.handle, cEntry, cOverride)
             LibC.free(cEntry)
             LibC.free(cOverride)
@@ -33,7 +34,8 @@ public class Context {
         }
         unsafe {
             let cEntry = LibC.mallocCString(entry)
-            let cOverride = LibC.mallocCString(pipelineOverride)
+            let overrideStr = if (pipelineOverride.isEmpty()) { "{}" } else { pipelineOverride }
+            let cOverride = LibC.mallocCString(overrideStr)
             let res = MaaContextRunRecognition_wrap(this.handle, cEntry, cOverride, image.raw())
             LibC.free(cEntry)
             LibC.free(cOverride)
@@ -48,7 +50,8 @@ public class Context {
         var cBox = box.toC()
         unsafe {
             let cEntry = LibC.mallocCString(entry)
-            let cOverride = LibC.mallocCString(pipelineOverride)
+            let overrideStr = if (pipelineOverride.isEmpty()) { "{}" } else { pipelineOverride }
+            let cOverride = LibC.mallocCString(overrideStr)
             let cDetail = LibC.mallocCString(recoDetail)
             let arr = [cBox]
             let rawHandle = acquireArrayRawData(arr)

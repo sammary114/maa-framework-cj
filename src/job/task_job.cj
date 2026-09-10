@@ -33,24 +33,27 @@ public class TaskJob <: Job<TaskDetail> {
             return None
         }
         let entryBuf = StringBuffer()
-        let arr: Array<Int32> = [0]
+        let sizeArr: Array<UInt64> = [0]
+        let statusArr: Array<Int32> = [0]
         let ok = unsafe {
-            let rawHandle = acquireArrayRawData(arr)
+            let rawSize = acquireArrayRawData(sizeArr)
+            let rawStatus = acquireArrayRawData(statusArr)
             let res = MaaTaskerGetTaskDetail_wrap(
                 this.taskerHandle,
                 this.jobId,
                 entryBuf.raw(),
                 CPointer<MaaNodeId>(),
-                CPointer<MaaSize>(),
-                rawHandle.pointer
+                rawSize.pointer,
+                rawStatus.pointer
             )
-            releaseArrayRawData(rawHandle)
+            releaseArrayRawData(rawSize)
+            releaseArrayRawData(rawStatus)
             res
         }
         let entry = entryBuf.get()
         entryBuf.destroy()
         if (ok != 0) {
-            return Some(TaskDetail(this.jobId, entry, Status.fromC(arr[0])))
+            return Some(TaskDetail(this.jobId, entry, Status.fromC(statusArr[0])))
         }
         return None
     }
