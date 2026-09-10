@@ -106,7 +106,7 @@ cjpm test --show-all-output --no-progress
 
 | 现象 | 可能原因 | 解决办法 |
 |:---|:---|:---|
-| `cjc / cjpm: command not found` | 仓颉编译器未配置或未安装 | 安装 Cangjie SDK LTS 1.0.5+ 或配置 `cjv envsetup` |
+| `cjc / cjpm: command not found` | 仓颉编译器未配置或未安装 | 安装 Cangjie SDK LTS 1.0.5+ 或使用 `check_env.ps1` |
 | `MaaFramework.dll not found` | 运行期动态链接器找不到 DLL | 运行 `$env:PATH = "$PWD\deps\bin;$env:PATH"` 或将 DLL 放置于程序同级目录 |
 | `cjbind: stdint.h not found` | Windows 系统未安装或未检测到 Clang 基础头文件 | 安装 LLVM 或运行 `./tools/fetch_maafw.ps1` 后由脚本自动寻找系统编译器头文件 |
 
