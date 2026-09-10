@@ -83,21 +83,32 @@ main() {
 
 ---
 
-## 🛠️ 本地开发与测试（面向框架贡献者）
+## 🛠️ 本地开发、环境自检与测试（面向框架贡献者）
 
-如果你参与本框架的开发或进行单元测试：
+如果你参与本框架的开发或进行单元测试，可使用内置工具进行全套自检与构建：
 
 ```powershell
-# 1. 一键拉取测试依赖 (MaaFramework 动态库)
+# 1. 一键环境自检 (检查 cjc / cjpm / cjbind / MaaFramework 依赖与 PATH 状态)
+./tools/check_env.ps1
+
+# 2. 一键拉取依赖 (MaaFramework 动态库与头文件)
 ./tools/fetch_maafw.ps1
 
-# 2. 生成/更新底层 FFI (需安装 cjbind)
+# 3. 生成/更新底层 FFI (需安装 cjbind)
 ./tools/gen_bindings.ps1
 
-# 3. 运行全量单元测试
+# 4. 运行全量单元测试
 $env:PATH = "$PWD\deps\bin;$env:PATH"
 cjpm test --show-all-output --no-progress
 ```
+
+### 💡 常见问题与排错提示
+
+| 现象 | 可能原因 | 解决办法 |
+|:---|:---|:---|
+| `cjc / cjpm: command not found` | 仓颉编译器未配置或未安装 | 安装 Cangjie SDK LTS 1.0.5+ 或配置 `cjv envsetup` |
+| `MaaFramework.dll not found` | 运行期动态链接器找不到 DLL | 运行 `$env:PATH = "$PWD\deps\bin;$env:PATH"` 或将 DLL 放置于程序同级目录 |
+| `cjbind: stdint.h not found` | Windows 系统未安装或未检测到 Clang 基础头文件 | 安装 LLVM 或运行 `./tools/fetch_maafw.ps1` 后由脚本自动寻找系统编译器头文件 |
 
 ---
 

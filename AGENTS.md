@@ -91,7 +91,9 @@ The project wraps the high-performance native C automation core into safe, idiom
 ```text
 maa-framework-cj/
 ├── cjpm.toml                   # Cangjie Package Manager manifest (LTS 1.0.5)
-├── tools/                      # Dependency fetching & FFI generation tools
+├── tools/                      # Dependency fetching, health checks & FFI generation tools
+│   ├── check_env.ps1           # Windows environment health check tool
+│   ├── check_env.sh            # Linux / macOS environment health check tool
 │   ├── fetch_maafw.ps1         # Windows automated dependency downloader
 │   ├── fetch_maafw.sh          # Linux / macOS automated dependency downloader
 │   ├── gen_bindings.ps1        # Windows PowerShell FFI generation script (cjbind)
@@ -142,6 +144,19 @@ maa-framework-cj/
 ---
 
 ## Development Commands
+
+### 0. Environment Health Check & Diagnostics
+
+```powershell
+# Windows (PowerShell)
+./tools/check_env.ps1
+```
+
+```bash
+# Linux / macOS (Bash)
+chmod +x ./tools/check_env.sh
+./tools/check_env.sh
+```
 
 ### 1. Automated Dependency Fetching
 
