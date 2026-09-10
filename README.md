@@ -15,9 +15,11 @@ Cangjie (仓颉) language binding for **[MaaFramework](https://github.com/MaaXYZ
 ```text
 maa-framework-cj/
 ├── cjpm.toml                   # 仓颉工程配置文件
-├── tools/                      # FFI 自动化生成脚本 (cjbind)
-│   ├── gen_bindings.ps1
-│   └── gen_bindings.sh
+├── tools/                      # 辅助工具与脚本
+│   ├── fetch_maafw.ps1         # Windows 自动拉取 MaaFramework 发行包
+│   ├── fetch_maafw.sh          # Linux / macOS 自动拉取 MaaFramework 发行包
+│   ├── gen_bindings.ps1        # Windows FFI 自动化生成脚本 (cjbind)
+│   └── gen_bindings.sh         # Linux / macOS FFI 自动化生成脚本 (cjbind)
 ├── src/                        # 核心源代码
 │   ├── ffi/                    # 底层 C API 绑定 (cjbind 自动生成)
 │   ├── types/                  # 基础类型 (Rect, Status 等)
@@ -35,17 +37,25 @@ maa-framework-cj/
 ### 1. 前置准备
 
 1. 安装 [Cangjie 仓颉 SDK](https://cangjie-lang.cn/)；
-2. 安装 [cjbind](https://cjbind.zxilly.dev/)（用于自动生成/更新 FFI 绑定）；
-3. 下载对应平台的 [MaaFramework 发行包](https://github.com/MaaXYZ/MaaFramework/releases)，将动态库（`.dll` / `.so` / `.dylib`）放入系统动态库路径或应用程序运行目录。
+2. 安装 [cjbind](https://cjbind.zxilly.dev/)（仅在需要重新生成 FFI 绑定时必需）；
+3. 运行依赖拉取脚本自动下载 MaaFramework 预编译产物与头文件（保存至 `.gitignore` 忽略的 `deps/` 目录）：
+   ```powershell
+   # Windows (PowerShell)
+   ./tools/fetch_maafw.ps1
 
-### 2. 生成 FFI 绑定
+   # Linux / macOS (Bash)
+   ./tools/fetch_maafw.sh
+   ```
 
-将 MaaFramework 的 `include/` 目录放置在根目录下，执行：
+### 2. 生成/更新 FFI 绑定
 
 ```powershell
+# Windows (PowerShell)
 ./tools/gen_bindings.ps1
-```
 
+# Linux / macOS (Bash)
+./tools/gen_bindings.sh
+```
 ### 3. 代码示例
 
 ```cangjie

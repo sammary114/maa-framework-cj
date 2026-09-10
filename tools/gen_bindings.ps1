@@ -1,28 +1,39 @@
 param(
-    [string]$MaaIncludeDir = "./include"
+    [string]$MaaIncludeDir = ""
 )
 
 $ErrorActionPreference = "Stop"
 
-if (-not (Test-Path "$MaaIncludeDir/MaaFramework/MaaAPI.h")) {
-    Write-Host "错误: 未找到 $MaaIncludeDir/MaaFramework/MaaAPI.h，请先下载并放置 MaaFramework 头文件！" -ForegroundColor Red
-    exit 1
+if ([string]::IsNullOrWhiteSpace($MaaIncludeDir)) {
+    if (Test-Path "./deps/include/MaaFramework/MaaAPI.h") {
+        $MaaIncludeDir = "./deps/include"
+    } elseif (Test-Path "./include/MaaFramework/MaaAPI.h") {
+        $MaaIncludeDir = "./include"
+    } else {
+        Write-Host "Error: MaaFramework headers not found!" -ForegroundColor Red
+        Write-Host "Please run ./tools/fetch_maafw.ps1 first, or place headers in ./deps/include or ./include." -ForegroundColor Yellow
+        exit 1
+    }
 }
 
 New-Item -ItemType Directory -Force -Path "src/ffi" | Out-Null
 
-Write-Host "正在生成 maa_core FFI 绑定..." -ForegroundColor Cyan
+Write-Host "Generating maa_core FFI bindings..." -ForegroundColor Cyan
 cjbind -p maa.ffi `
        --auto-cstring `
        -o src/ffi/maa_core.cj `
        "$MaaIncludeDir/MaaFramework/MaaAPI.h" `
        -- -I"$MaaIncludeDir"
 
-Write-Host "正在生成 maa_toolkit FFI 绑定..." -ForegroundColor Cyan
+Write-Host "Generating maa_toolkit FFI bindings..." -ForegroundColor Cyan
+$toolkitHeader = if (Test-Path "$MaaIncludeDir/MaaToolkit/MaaToolkitAPI.h") {
+    "$MaaIncludeDir/MaaToolkit/MaaToolkitAPI.h"
+} else {
+    "$MaaIncludeDir/MaaFramework/MaaToolkitAPI.h"
+}
 cjbind -p maa.ffi `
        --auto-cstring `
        -o src/ffi/maa_toolkit.cj `
-       "$MaaIncludeDir/MaaFramework/MaaToolkitAPI.h" `
+       "$toolkitHeader" `
        -- -I"$MaaIncludeDir"
-
-Write-Host "FFI 代码生成完成！输出目录: src/ffi/" -ForegroundColor Green
+Write-Host "FFI generation completed! Output directory: src/ffi/" -ForegroundColor Green
