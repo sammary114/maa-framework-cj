@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - 'maafw-*'
+      - 'cangjie-*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Cangjie Toolchain
+        uses: Zxilly/setup-cangjie@v3
+        with:
+          version: "1.0.5"
+
+      - name: Fetch MaaFramework Prebuilts (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./tools/fetch_maafw.ps1 -Version "latest"
+
+      - name: Fetch MaaFramework Prebuilts (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          chmod +x ./tools/fetch_maafw.sh
+          ./tools/fetch_maafw.sh latest
+
+      - name: Build SDK
+        run: cjpm build
+
+      - name: Run Unit Tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:PATH = "$PWD\deps\bin;$env:PATH"
+          cjpm test --show-all-output --no-progress
+
+      - name: Run Unit Tests (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          export LD_LIBRARY_PATH="$(pwd)/deps/bin:$(pwd)/deps/lib:${LD_LIBRARY_PATH:-}"
+          cjpm test --show-all-output --no-progress
+
+      - name: Run QuickStart Demo (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:PATH = "$PWD\deps\bin;$env:PATH"
+          cd examples/quickstart
+          cjpm run
+
+      - name: Run QuickStart Demo (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          export LD_LIBRARY_PATH="$(pwd)/deps/bin:$(pwd)/deps/lib:${LD_LIBRARY_PATH:-}"
+          cd examples/quickstart
+          cjpm run
