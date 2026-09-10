@@ -4,18 +4,18 @@
 
 本框架遵循 **MaaFramework 官方文档《4.2 标准化接口设计》规范**，为仓颉开发者提供类型安全、面向对象、内存安全的自动化测试与图像识别开发体验。
 
-> **🚀 极简集成**：下游应用只需在 `cjpm.toml` 中引入依赖并 `import maa.*`，即可调用全套 MaaFramework 核心能力。
+> **🚀 零手动胶水代码！** 基于 [cjbind](https://github.com/cjbind/cjbind) 自动化解析 C 头文件生成强类型仓颉 FFI 绑定，下游集成无需安装任何 C 编译器或代码生成工具，开箱即用。
 
 ---
 
 ## ✨ 核心特性
 
-- **面向对象封装** - 提供 `Resource` / `MaaResource`、`Controller`（ADB / Win32）、`Tasker`、`Instance` 等核心对象
+- **自动化 FFI 绑定** - 基于 [cjbind](https://github.com/cjbind/cjbind) 解析生成，与 MaaFramework 原生 C API 保持严格同步与类型安全
+- **标准 OOP 架构** - 面向对象封装，提供 `Resource` / `MaaResource`、`Controller`（ADB / Win32）、`Tasker`、`Instance` 等核心对象
 - **强类型异步 Job 体系** - 提供 `TaskJob`、`ResJob`、`CtrlJob` 异步任务调度与状态同步（`.wait()`、`.status()`、`.isDone()`）
 - **设备与窗口扫描** - 内置 `AdbDeviceFinder`（自动扫描 ADB 设备）与 `DesktopWindowFinder`（扫描桌面窗口）
 - **内存安全 RAII** - 自动管理 `StringBuffer`、`StringListBuffer`、`ImageBuffer` 原生缓冲区生命周期
 - **自定义扩展机制** - 支持继承 `CustomRecognition` 与 `CustomAction` 编写纯仓颉自定义识别与动作算法
-
 ---
 
 ## 🚀 快速上手
