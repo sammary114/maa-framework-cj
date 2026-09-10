@@ -2,13 +2,14 @@
 
 ## Project Overview
 
-`maa-framework-cj` is the official **Cangjie (仓颉)** language binding SDK for **[MaaFramework](https://github.com/MaaXYZ/MaaFramework)** (designed for MaaFramework 4.2 C API specifications).
+`maa-framework-cj` is the official **Cangjie (仓颉)** language binding SDK for **[MaaFramework](https://github.com/MaaXYZ/MaaFramework)** (targeting MaaFramework 4.2+ / 5.x C API specifications).
 
-The project wraps the high-performance native C automation framework into safe, idiomatic, object-oriented Cangjie abstractions. It provides:
-- **Object-Oriented Design**: High-level abstractions for pipeline components (`Resource`, `Controller`, `Tasker`, `Instance`).
-- **Asynchronous Task Architecture**: A strongly typed `Job` model (`TaskJob`, `ResJob`, `CtrlJob`) for non-blocking task dispatch and lifecycle synchronization.
-- **Automated FFI Generation**: Zero manual glue code maintenance via automated `cjbind` bindings parsing native C headers.
-- **Comprehensive Feature Coverage**: Full support for ADB and Win32 controllers, resource management, custom recognition/action extensions, and Toolkit device discovery (`AdbDeviceFinder`).
+The project wraps the high-performance native C automation core into safe, idiomatic, object-oriented Cangjie abstractions. It provides:
+- **Object-Oriented Design**: High-level OOP domain abstractions (`Resource` / `MaaResource`, `Controller` / `AdbController` / `Win32Controller`, `Tasker`, `Instance`).
+- **Asynchronous Task Architecture**: A strongly typed `Job` hierarchy (`Job<T>`, `TaskJob`, `ResJob`, `CtrlJob`) for non-blocking task dispatch and lifecycle synchronization.
+- **Automated FFI Generation**: Automated `cjbind` binding pipeline parsing native C headers with zero manual glue code maintenance overhead.
+- **Buffer Safety & RAII**: Zero-leak memory management for native buffers (`StringBuffer`, `StringListBuffer`, `ImageBuffer`).
+- **Toolkit & Discovery**: Automated device discovery utilities (`AdbDeviceFinder`, `DesktopWindowFinder`).
 
 ---
 
@@ -20,44 +21,49 @@ The project wraps the high-performance native C automation framework into safe, 
 ┌─────────────────────────────────────────────────────────────┐
 │                 High-Level Application Code                 │
 │              (Examples, Automation Scripts, Apps)           │
+│                    import maa.*                             │
 └──────────────────────────────┬──────────────────────────────┘
                                │
 ┌──────────────────────────────▼──────────────────────────────┐
 │                    maa-framework-cj SDK                     │
 │ ┌──────────────────────┐ ┌────────────────────────────────┐ │
 │ │  maa.toolkit         │ │  maa.core                      │ │
-│ │  - AdbDeviceFinder   │ │  - Resource, Controller, Tasker│ │
-│ └──────────────────────┘ └────────────────────────────────┘ │
-│ ┌──────────────────────┐ ┌────────────────────────────────┐ │
-│ │  maa.job             │ │  maa.custom                    │ │
-│ │  - Job<T>, TaskJob   │ │  - CustomAction/Recognizer     │ │
-│ └──────────────────────┘ └────────────────────────────────┘ │
-│ ┌──────────────────────┐ ┌────────────────────────────────┐ │
-│ │  maa.buffer          │ │  maa.types                     │ │
-│ │  - StringBuffer      │ │  - Rect, Status, Device        │ │
-│ │  - ImageBuffer       │ │                                │ │
-│ └──────────────────────┘ └────────────────────────────────┘ │
+│ │  - AdbDeviceFinder   │ │  - Global                      │ │
+│ │  - DesktopWindowFind │ │  - Resource / MaaResource      │ │
+│ └──────────────────────┘ │  - Controller (Adb, Win32)     │ │
+│ ┌──────────────────────┐ │  - Tasker, Instance            │ │
+│ │  maa.job             │ └────────────────────────────────┘ │
+│ │  - Job<T>, TaskJob   │ ┌────────────────────────────────┐ │
+│ │  - ResJob, CtrlJob   │ │  maa.custom                    │ │
+│ └──────────────────────┘ │  - Context                     │ │
+│ ┌──────────────────────┐ │  - CustomAction/Recognizer     │ │
+│ │  maa.buffer          │ └────────────────────────────────┘ │
+│ │  - StringBuffer      │ ┌────────────────────────────────┐ │
+│ │  - StringListBuffer  │ │  maa.types                     │ │
+│ │  - ImageBuffer       │ │  - Rect, Point, Status         │ │
+│ └──────────────────────┘ │  - AdbDevice, Details, Param   │ │
+│                          └────────────────────────────────┘ │
 └──────────────────────────────┬──────────────────────────────┘
                                │
 ┌──────────────────────────────▼──────────────────────────────┐
 │          FFI Layer (maa.ffi: cjbind generated)              │
-│       - maa_core.cj (MaaFramework/MaaAPI.h)                 │
-│       - maa_toolkit.cj (MaaFramework/MaaToolkitAPI.h)       │
+│       - src/ffi/maa_ffi.cj (MaaAPI.h + MaaToolkitAPI.h)     │
 └──────────────────────────────┬──────────────────────────────┘
                                │ (Dynamic Link: .dll / .so / .dylib)
 ┌──────────────────────────────▼──────────────────────────────┐
 │            Native MaaFramework C Runtime Libraries          │
+│         (deps/bin/MaaFramework.dll, MaaToolkit.dll)         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Module Responsibilities
 
-- **`maa.core`**: High-level domain wrappers managing native instances (`Resource`, `AdbController`, `Win32Controller`, `Tasker`, `Instance`) with RAII handle lifecycles.
-- **`maa.job`**: Asynchronous job handles (`Job<T>`, `TaskJob`, `ResJob`, `CtrlJob`) wrapping native `MaaJobId` and providing blocking `.wait()` and polling status queries.
-- **`maa.buffer`**: Safe wrappers around native string/image buffers (`StringBuffer`, `ImageBuffer`) for zero-leak memory exchange.
-- **`maa.custom`**: Extensibility hooks and C callback delegates for custom recognizers and custom action implementations.
-- **`maa.types`**: Geometry primitives (`Rect`, `Point`), error codes, and enumeration mappings.
-- **`maa.toolkit`**: Toolkit utility wrappers such as `AdbDeviceFinder` for hardware and emulator device discovery.
+- **`maa.core`**: High-level domain wrappers managing native instances (`Global`, `Resource` / `MaaResource`, `Controller`, `AdbController`, `Win32Controller`, `Tasker`, `Instance`) with RAII handle lifecycles.
+- **`maa.job`**: Asynchronous job handles (`Job<T>`, `TaskJob`, `ResJob`, `CtrlJob`) wrapping native `MaaJobId` and providing `.wait()`, `.status()`, `.get()`, and completion predicates.
+- **`maa.buffer`**: Memory-safe wrappers around native string/image buffers (`StringBuffer`, `StringListBuffer`, `ImageBuffer`) ensuring automatic disposal.
+- **`maa.custom`**: Extensibility hooks and C callback delegates for custom recognizers, custom action implementations, and runtime `Context`.
+- **`maa.types`**: Geometry primitives (`Rect`, `Point`), status codes (`Status`, `JobStatus`), logging levels, and parameter structures.
+- **`maa.toolkit`**: Toolkit utility wrappers such as `AdbDeviceFinder` and `DesktopWindowFinder` returning structured entity arrays.
 - **`maa.ffi`**: Direct low-level C FFI declarations generated by `cjbind` from `MaaAPI.h` and `MaaToolkitAPI.h`.
 
 ### Data Flow
@@ -84,30 +90,60 @@ The project wraps the high-performance native C automation framework into safe, 
 
 ```text
 maa-framework-cj/
-├── cjpm.toml                   # Cangjie Package Manager manifest
-├── tools/                      # Helper scripts (dependency fetching & FFI generation)
+├── cjpm.toml                   # Cangjie Package Manager manifest (LTS 1.0.5)
+├── tools/                      # Dependency fetching & FFI generation tools
 │   ├── fetch_maafw.ps1         # Windows automated dependency downloader
 │   ├── fetch_maafw.sh          # Linux / macOS automated dependency downloader
-│   ├── gen_bindings.sh         # Linux / macOS FFI generation script (cjbind)
-│   └── gen_bindings.ps1        # Windows PowerShell FFI generation script (cjbind)
+│   ├── gen_bindings.ps1        # Windows PowerShell FFI generation script (cjbind)
+│   └── gen_bindings.sh         # Linux / macOS FFI generation script (cjbind)
+├── deps/                       # Local dependency binaries & headers (gitignored)
+│   ├── bin/                    # MaaFramework.dll, MaaToolkit.dll (runtime DLLs)
+│   ├── lib/                    # MaaFramework.lib, MaaToolkit.lib (import libs)
+│   └── include/                # MaaFramework/ and MaaToolkit/ C headers
 ├── src/                        # Core Cangjie SDK source files (package: maa)
-│   ├── ffi/                    # Auto-generated C FFI bindings (maa.ffi)
-│   ├── types/                  # Geometry, constants, and status enums (maa.types)
-│   ├── buffer/                 # Native string and image buffers (maa.buffer)
-│   ├── job/                    # Asynchronous Job primitives (maa.job)
-│   ├── core/                   # High-level OOP wrappers (maa.core)
-│   ├── custom/                 # Custom recognizers and actions (maa.custom)
-│   └── toolkit/                # Tooling and device discovery (maa.toolkit)
-├── examples/                   # Usage examples and sample projects
-│   └── quickstart/             # Quickstart demonstration
-└── test/                       # Unit and integration test suites
+│   ├── ffi/
+│   │   └── maa_ffi.cj          # Unified C FFI bindings (maa.ffi)
+│   ├── types/
+│   │   ├── geometry.cj         # Rect, Point (<: ToString)
+│   │   ├── status.cj           # Status, JobStatus, LoggingLevel (<: ToString)
+│   │   ├── device.cj           # AdbDevice, DesktopWindow (<: ToString)
+│   │   ├── callback.cj         # CustomActionParam, CustomRecognitionParam
+│   │   └── details.cj          # TaskDetail, RecoDetail, NodeDetail
+│   ├── buffer/
+│   │   ├── string_buffer.cj    # StringBuffer (RAII, C-String conversion)
+│   │   ├── string_list_buffer.cj# StringListBuffer (string array interop)
+│   │   └── image_buffer.cj     # ImageBuffer (dimensions, raw/encoded buffers)
+│   ├── job/
+│   │   ├── job.cj              # Job<T> abstract base class
+│   │   ├── task_job.cj         # TaskJob (.wait(), .status(), .get())
+│   │   ├── res_job.cj          # ResJob (.wait(), .status())
+│   │   └── ctrl_job.cj         # CtrlJob (.wait(), .status())
+│   ├── core/
+│   │   ├── global.cj           # Global (version, loadPlugin)
+│   │   ├── resource.cj         # Resource / MaaResource (bundles, pipelines)
+│   │   ├── controller.cj       # Controller, AdbController, Win32Controller
+│   │   ├── tasker.cj           # Tasker (binds Resource & Controller, dispatches tasks)
+│   │   └── instance.cj         # Instance (high-level unified pipeline facade)
+│   ├── custom/
+│   │   ├── context.cj          # Context (runtime execution context)
+│   │   ├── custom_action.cj    # CustomAction abstract class
+│   │   └── custom_recognition.cj# CustomRecognition abstract class
+│   ├── toolkit/
+│   │   ├── adb_device_finder.cj# AdbDeviceFinder.find() -> Array<AdbDevice>
+│   │   └── desktop_window_finder.cj# DesktopWindowFinder.find() -> Array<DesktopWindow>
+│   ├── lib.cj                  # Root package re-exporting all high-level modules
+│   └── sdk_test.cj             # Comprehensive SDK unit tests (std.unittest)
+└── examples/
+    └── quickstart/             # Quickstart runnable application
+        ├── cjpm.toml
+        └── main.cj
 ```
 
 ---
 
 ## Development Commands
 
-### Automated Dependency Fetching
+### 1. Automated Dependency Fetching
 
 Download precompiled MaaFramework binaries and headers to `.gitignore`'d `deps/`:
 
@@ -122,9 +158,9 @@ chmod +x ./tools/fetch_maafw.sh
 ./tools/fetch_maafw.sh [VERSION] [TARGET_DIR] [USE_MIRROR]
 ```
 
-### FFI Binding Generation
+### 2. FFI Binding Generation
 
-Generate or update FFI bindings from `deps/include` or `./include`:
+Generate or update unified FFI bindings from `deps/include` or `./include`:
 
 ```powershell
 # Windows (PowerShell)
@@ -137,13 +173,14 @@ chmod +x ./tools/gen_bindings.sh
 ./tools/gen_bindings.sh [MAA_INCLUDE_DIR]
 ```
 
-*Direct `cjbind` invocations used by the scripts:*
+*Direct `cjbind` invocation used by the scripts:*
 ```bash
-cjbind -p maa.ffi --auto-cstring -o src/ffi/maa_core.cj deps/include/MaaFramework/MaaAPI.h -- -Ideps/include
-cjbind -p maa.ffi --auto-cstring -o src/ffi/maa_toolkit.cj deps/include/MaaFramework/MaaToolkitAPI.h -- -Ideps/include
+cjbind -p maa.ffi --auto-cstring --make-func-wrapper --func-wrapper-suffix "_wrap" \
+       -o src/ffi/maa_ffi.cj deps/include/MaaFramework/MaaAPI.h deps/include/MaaToolkit/MaaToolkitAPI.h \
+       -- -Ideps/include
 ```
 
-### Build & Package Management
+### 3. Build & Package Management
 
 ```bash
 # Compile static library (Debug mode)
@@ -152,17 +189,32 @@ cjpm build
 # Compile static library (Release mode)
 cjpm build --release
 
-# Clean build artifacts (removes build/ directory)
+# Clean build artifacts
 cjpm clean
 ```
 
-### Running Tests & Applications
+### 4. Running Unit Tests
+
+*Ensure native dynamic libraries (`deps/bin`) and Cangjie toolchain are in `PATH`:*
+
+```powershell
+# Windows (PowerShell)
+$env:PATH = "$PWD\deps\bin;C:\Users\sammary\.cjv\bin;$env:PATH"
+cjpm test --show-all-output --no-progress
+```
 
 ```bash
-# Run test suite
-cjpm test
+# Linux / macOS (Bash)
+export LD_LIBRARY_PATH="$(pwd)/deps/bin:$(pwd)/deps/lib:${LD_LIBRARY_PATH:-}"
+cjpm test --show-all-output --no-progress
+```
 
-# Run application / example entry point
+### 5. Running Quickstart Example
+
+```powershell
+# Windows (PowerShell)
+$env:PATH = "$PWD\deps\bin;C:\Users\sammary\.cjv\bin;$env:PATH"
+cd examples/quickstart
 cjpm run
 ```
 
@@ -172,83 +224,52 @@ cjpm run
 
 ### Naming Conventions
 
-- **Packages / Namespaces**: Lowercase dot-separated (e.g. `maa.core`, `maa.ffi`, `maa.job`, `maa.types`, `maa.toolkit`).
-- **Types / Classes / Structs / Interfaces**: PascalCase (e.g. `Resource`, `AdbController`, `TaskJob`, `MaaStatus`, `StringBuffer`).
-- **Functions & Methods**: camelCase (e.g. `postConnect()`, `postTask()`, `postPath()`, `wait()`, `find()`).
-- **Variables & Parameters**: camelCase (e.g. `deviceSerial`, `configPath`, `taskJob`).
+- **Packages / Namespaces**: Lowercase dot-separated (`maa`, `maa.core`, `maa.ffi`, `maa.job`, `maa.types`, `maa.toolkit`, `maa.custom`, `maa.buffer`).
+- **Types / Classes / Structs / Interfaces**: PascalCase (`Resource`, `MaaResource`, `AdbController`, `Tasker`, `TaskJob`, `Status`, `StringBuffer`).
+- **Functions & Methods**: camelCase (`postConnect()`, `postTask()`, `postPath()`, `wait()`, `status()`, `find()`).
+- **Variables & Parameters**: camelCase (`deviceSerial`, `configPath`, `taskJob`).
 - **Constants & Enums**: PascalCase or UPPER_SNAKE_CASE matching Cangjie standard conventions.
 
 ### Memory Management & RAII Patterns
 
-- **Native Handle Encapsulation**: Wrap raw C pointer handles (`CPointer`, `MaaResourceHandle`, `MaaControllerHandle`, `MaaTaskerHandle`) inside Cangjie classes.
-- **Deterministic Cleanup**: Implement explicit resource disposal (`destroy()` / finalizers) calling corresponding native `MaaDestroy*` APIs to prevent native memory leaks.
-- **C-String Conversions**: Generated with `--auto-cstring`. Convert Cangjie `String` to C-compatible strings across FFI boundaries with strict lifetime scoping.
+- **Native Handle Encapsulation**: Wrap raw C pointer handles (`CPointer`, `CPointer<MaaResource>`, `CPointer<MaaController>`, `CPointer<MaaTasker>`) inside Cangjie classes.
+- **Deterministic Cleanup**: Implement explicit resource disposal (`destroy()` and `close()`) calling corresponding native `MaaDestroy*` APIs.
+- **C-String Conversions**: Use `LibC.mallocCString(val)` and `LibC.free(cstr)` across FFI boundaries with strict lifetime scoping.
+- **Mutable Pointer Interop**: Use `acquireArrayRawData(arr)` and `releaseArrayRawData(handle)` to pass mutable pointers to native C functions.
+
+### Disambiguation & Import Conventions
+
+- **`std.core.Resource` Avoidance**: The Cangjie standard library `std.core` defines an `interface Resource`. To prevent namespace collisions, `src/core/resource.cj` provides `public class MaaResource` and `public type Resource = MaaResource`.
+- **Downstream Consumer Imports**: Downstream applications simply use `import maa.*` to access all high-level classes.
 
 ### Asynchronous & Job Patterns
 
 - Native MaaFramework asynchronous calls return a `MaaJobId`.
 - Wrap native IDs in strongly typed `Job<T>` instances (`TaskJob`, `ResJob`, `CtrlJob`).
-- Provide blocking `.wait()` / `.wait(timeout)` methods and status polling (`job.getStatus()`, `job.isDone()`).
+- Provide blocking `.wait()` / `.wait(timeout)` methods and status polling (`job.status()`, `job.isDone()`, `job.isSucceeded()`).
 
 ### Error Handling
 
-- Convert native status codes (`MaaStatus`, `MaaBool`) into idiomatic Cangjie types (`Option<T>`, `Result`, or explicit exceptions).
-- Validate handle allocations immediately upon instantiation; throw descriptive exceptions if native creation APIs return null handles.
+- Convert native status codes into idiomatic `Status` enums (`Status.Pending`, `Status.Running`, `Status.Succeeded`, `Status.Failed`, `Status.Invalid`).
+- Check handle validity on instantiation; return safe defaults (`Status.Invalid` / empty options) on invalid handles.
 
-### MaaFramework 4.2 Standardized Interface Design Rules
+---
 
-All Cangjie bindings MUST strictly adhere to the [MaaFramework 4.2 Standardized Interface Design specification](https://github.com/MaaXYZ/MaaFramework/blob/main/docs/zh_cn/4.2-%E6%A0%87%E5%87%86%E5%8C%96%E6%8E%A5%E5%8F%A3%E8%AE%BE%E8%AE%A1.md):
+## MaaFramework 4.2 Standardized Interface Design Rules
 
-1. **Object-Oriented Encapsulation**: `MaaTasker`, `MaaResource`, and `MaaController` are represented as OOP classes rather than procedural handles. APIs returning entities (e.g. `MaaContextGetTasker`) MUST return wrapped class instances, using handle-reference tracking or stateless wrappers with ownership flags.
-2. **Asynchronous Task (`Job`) Encapsulation**: Asynchronous IDs (`MaaTaskId`, `MaaCtrlId`, `MaaResId`) are NEVER directly exposed to users; they are encapsulated into `Job` classes (`TaskJob`, `ResJob`, `CtrlJob`) exposing `.wait()`, `.status()`, `.get()`, etc.
+All Cangjie bindings strictly adhere to the [MaaFramework 4.2 Standardized Interface Design specification](https://github.com/MaaXYZ/MaaFramework/blob/main/docs/zh_cn/4.2-%E6%A0%87%E5%87%86%E5%8C%96%E6%8E%A5%E5%8F%A3%E8%AE%BE%E8%AE%A1.md):
+
+1. **Object-Oriented Encapsulation**: `MaaTasker`, `MaaResource`, and `MaaController` are represented as OOP classes rather than procedural handles. APIs returning entities (e.g. `MaaContextGetTasker`) return wrapped class instances.
+2. **Asynchronous Task (`Job`) Encapsulation**: Asynchronous IDs (`MaaTaskId`, `MaaCtrlId`, `MaaResId`) are NEVER directly exposed to users; they are encapsulated into `Job` classes (`TaskJob`, `ResJob`, `CtrlJob`) exposing `.wait()`, `.status()`, `.get()`.
 3. **Job Class Methods**: `Job` classes encapsulate all ID-dependent queries (e.g. `TaskJob.get()` returns the wrapped `TaskDetail` querying `MaaTaskerGetTaskDetail`).
 4. **Query ID Encapsulation**: Query IDs (`MaaRecoId`, `MaaNodeId`) are queried internally (via `MaaTaskerGetRecoDetail`, etc.) and returned as structured types (`RecoDetail`, `NodeDetail`), never bare IDs.
 5. **Callback & Agent Wrapping**: `CustomAction`, `CustomRecognition`, and `NotificationCallback` are exposed as abstract base classes / interfaces. Internal C Agent delegates convert raw C types to idiomatic Cangjie types before invoking user overrides.
 6. **Parameter & Return Structs**: Callback parameters for `CustomRecognition` and `CustomAction` are wrapped into dedicated parameter structs to preserve API compatibility against future C header modifications.
 7. **Granular Option APIs**: `SetOption` enum values are exposed as individual dedicated methods (e.g. `setScreenshotTargetLongSide(...)`) rather than passing raw integers.
-8. **Buffer Safety**: `StringBuffer` and `ImageBuffer` are managed internally and exposed as native Cangjie `String` or image structures; raw C buffers are never leaked.
-9. **GC Reference Retention**: `bindResource`, `bindController`, and `registerCustom` maintain internal reference links to prevent garbage collection while bound to native components.
-10. **Structured Array Returns**: Toolkit discovery APIs (e.g. `AdbDeviceFinder.find()`) return typed arrays of structured descriptors (`Array<AdbDevice>`).
+8. **Buffer Safety**: `StringBuffer`, `StringListBuffer`, and `ImageBuffer` are managed internally and exposed as native Cangjie `String` or image structures; raw C buffers are never leaked.
+9. **GC Reference Retention**: `bind(res: Resource)` and `bind(ctrl: Controller)` maintain internal reference links inside `Tasker` to prevent premature garbage collection.
+10. **Structured Array Returns**: Toolkit discovery APIs (e.g. `AdbDeviceFinder.find()`, `DesktopWindowFinder.find()`) return typed arrays of structured descriptors (`Array<AdbDevice>`, `Array<DesktopWindow>`).
 11. **Example Completeness**: Provide end-to-end examples with interface parity matching the official Python SDK sample workflows.
-
-#### Advanced Notification & Callback Parsing
-- **Message Parsing & Dispatch**: `NotificationCallback` parses `MaaMsg` message types and dispatches to specific handler methods (e.g. `onResourceLoadingStarting(data)` or `onNotification(event, type, data)`), where `data` is a strongly typed struct parsed from `detail_json`.
-- **Forward Compatibility**: Support `onUnknownNotification` with fallback access to raw payload data for future-proofing against new MaaFramework messages.
-- **Recognition Detail Parsing**: Parse `detail_json` from `MaaTaskerGetRecognitionDetail` into `allResults`, `filteredResults`, and `bestResult` (nullable).
-
-### Quickstart Code Pattern
-
-```cangjie
-import maa.core.*
-import maa.toolkit.*
-import maa.job.*
-
-main() {
-    // 1. Scan for available ADB devices
-    let devices = AdbDeviceFinder.find()
-    if (devices.isEmpty()) {
-        println("No ADB device found")
-        return
-    }
-
-    // 2. Connect to the target controller
-    let ctrl = AdbController(devices[0].serial, devices[0].config)
-    ctrl.postConnect().wait()
-
-    // 3. Load pipeline resource pack
-    let res = Resource()
-    res.postPath("./resource").wait()
-
-    // 4. Assemble Tasker pipeline and execute task
-    let tasker = Tasker()
-    tasker.bind(res)
-    tasker.bind(ctrl)
-
-    let job = tasker.postTask("Start")
-    let status = job.wait()
-    println("Task completed with status: ${status}")
-}
-```
 
 ---
 
@@ -256,23 +277,31 @@ main() {
 
 | File Path | Description |
 | :--- | :--- |
-| `cjpm.toml` | Package manifest defining package name (`maa`), compiler version (`0.55.3`), static target, and paths. |
-| `tools/gen_bindings.sh` | Shell script for generating `src/ffi/` bindings via `cjbind` on Linux/macOS. |
-| `tools/gen_bindings.ps1` | PowerShell script for generating `src/ffi/` bindings via `cjbind` on Windows. |
-| `src/ffi/maa_core.cj` | Auto-generated C FFI bindings for core MaaFramework APIs (`MaaAPI.h`). |
-| `src/ffi/maa_toolkit.cj` | Auto-generated C FFI bindings for MaaToolkit APIs (`MaaToolkitAPI.h`). |
-| `src/core/` | Primary OOP wrapper modules (`Resource`, `Controller`, `Tasker`, `Instance`). |
+| `cjpm.toml` | Package manifest defining package name (`maa`), compiler version (`1.0.5`), static target, and paths. |
+| `tools/fetch_maafw.ps1` | PowerShell script for automated dependency downloading on Windows. |
+| `tools/fetch_maafw.sh` | Bash script for automated dependency downloading on Linux/macOS. |
+| `tools/gen_bindings.ps1` | PowerShell script for generating unified `src/ffi/maa_ffi.cj` via `cjbind`. |
+| `tools/gen_bindings.sh` | Bash script for generating unified `src/ffi/maa_ffi.cj` via `cjbind`. |
+| `src/ffi/maa_ffi.cj` | Auto-generated unified C FFI bindings (1500+ lines). |
+| `src/core/` | High-level OOP wrappers (`Global`, `Resource` / `MaaResource`, `Controller`, `Tasker`, `Instance`). |
 | `src/job/` | Asynchronous job execution and synchronization primitives (`Job`, `TaskJob`, `ResJob`, `CtrlJob`). |
-| `README.md` | Upstream documentation, feature matrix, installation steps, and quickstart examples. |
-| `.gitignore` | Ignore rules for build artifacts (`build/`), native dynamic libraries (`.dll`, `.so`, `.dylib`), and temp files. |
+| `src/buffer/` | RAII-safe native buffer wrappers (`StringBuffer`, `StringListBuffer`, `ImageBuffer`). |
+| `src/types/` | Geometry, status enums, and descriptor types (`Rect`, `Point`, `Status`, `AdbDevice`, `Details`). |
+| `src/toolkit/` | Discovery utilities (`AdbDeviceFinder`, `DesktopWindowFinder`). |
+| `src/custom/` | Extensibility base classes (`Context`, `CustomAction`, `CustomRecognition`). |
+| `src/lib.cj` | Root module re-exporting all high-level modules for consumer applications. |
+| `src/sdk_test.cj` | Comprehensive SDK unit tests executed with `cjpm test`. |
+| `examples/quickstart/` | Working standalone example application demonstrating the high-level API. |
+| `README.md` | Upstream documentation, feature matrix, installation steps, and quickstart guide. |
+| `.gitignore` | Ignore rules for build artifacts (`build/`), native dynamic libraries (`.dll`, `.so`, `.dylib`), and `deps/`. |
 
 ---
 
 ## Runtime & Tooling Preferences
 
-- **Cangjie Compiler & SDK**: Cangjie SDK `0.55.3+` (`cjc` compiler and `cjpm` package manager).
-- **FFI Binding Tool**: `cjbind` (latest) for parsing C header files into Cangjie FFI code.
-- **Native Runtime Binaries**: MaaFramework 4.2+ shared libraries (`MaaCore`, `MaaToolkit`, `MaaAdb`, `MaaWin32` `.dll` / `.so` / `.dylib`) must be available in system dynamic library search paths (`PATH` on Windows, `LD_LIBRARY_PATH` on Linux, `DYLD_LIBRARY_PATH` on macOS, or colocated in the application working directory).
+- **Cangjie Compiler & SDK**: Cangjie SDK `1.0.5+` (`cjc` compiler and `cjpm` package manager, LTS 1.0.5 `cjnative`).
+- **FFI Binding Tool**: `cjbind` version `0.3.6+` (installed to `$USERPROFILE/.cjpm/bin/cjbind.exe`) with LLVM support.
+- **Native Runtime Binaries**: MaaFramework 4.2+ / 5.x shared libraries (`MaaFramework`, `MaaToolkit`, etc. `.dll` / `.so` / `.dylib`) in `deps/bin` or system dynamic library search paths (`PATH` on Windows, `LD_LIBRARY_PATH` on Linux, `DYLD_LIBRARY_PATH` on macOS).
 - **Supported Target Platforms**: Windows x64, Linux x64/aarch64, macOS x64/arm64.
 
 ---
@@ -280,11 +309,22 @@ main() {
 ## Testing & QA
 
 - **Test Framework**: Cangjie standard unit test framework (`std.unittest`) run via `cjpm test`.
-- **Test Organization**:
-  - `test/` or `tests/` directory structured to mirror `src/`.
-  - **Unit Tests**: Test geometry types (`Rect`, `Point`), buffer conversions (`StringBuffer`, `ImageBuffer`), and status mapping in isolation without external dependencies.
-  - **Mock Tests**: Utilize `CustomController` / `CustomAction` to test `Tasker` execution and pipeline dispatch without physical devices or emulators.
-  - **Integration Tests**: Execute device scanning and live pipeline execution against connected ADB emulators or Win32 desktop targets.
+- **Running Tests**:
+  ```powershell
+  $env:PATH = "$PWD\deps\bin;C:\Users\sammary\.cjv\bin;$env:PATH"
+  cjpm test --show-all-output --no-progress
+  ```
+- **Test Coverage**:
+  1. `testGlobalVersion`: Verifies native runtime version retrieval (`Global.version()`).
+  2. `testGeometryTypes`: Verifies `Point` and `Rect` bi-directional conversion with C structs (`MaaRect`).
+  3. `testStatusEnum`: Verifies `Status` state machine predicates (`isPending`, `isRunning`, `isSucceeded`, `isFailed`, `isDone`).
+  4. `testStringBuffer`: Verifies `StringBuffer` text assignment, retrieval, clearing, size, and RAII cleanup.
+  5. `testStringListBuffer`: Verifies `StringListBuffer` appending, element indexing, size, array conversion, and cleanup.
+  6. `testImageBuffer`: Verifies `ImageBuffer` dimensions, empty state, and cleanup.
+  7. `testResourceLifecycle`: Verifies `MaaResource` creation, loaded state check, hash query, and destruction.
+  8. `testTaskerLifecycle`: Verifies `Tasker` creation, binding to `MaaResource`, running state check, and destruction.
+  9. `testAdbDeviceFinderScan`: Verifies `AdbDeviceFinder.find()` execution and device enumeration.
 - **QA Expectations**:
-  - Keep `src/ffi/` in exact synchronization with the upstream MaaFramework 4.2 C header definitions.
+  - Maintain 100% test pass rate across the test suite (`TOTAL: 9, PASSED: 9, FAILED: 0`).
+  - Keep `src/ffi/maa_ffi.cj` synchronized with upstream MaaFramework C headers.
   - Enforce strict RAII memory safety—ensure all native handles are released without memory leaks.
