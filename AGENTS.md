@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-`maa-framework-cj` is the official **Cangjie (仓颉)** language binding SDK for **[MaaFramework](https://github.com/MaaXYZ/MaaFramework)** (following the official **Chapter 4.2 Standardized Interface Design** specification).
+`maa-framework-cj` is the community-maintained **Cangjie (仓颉)** language binding SDK for **[MaaFramework](https://github.com/MaaXYZ/MaaFramework)** (following the **Chapter 4.2 Standardized Interface Design** specification).
 
 The project wraps the high-performance native C automation core into safe, idiomatic, object-oriented Cangjie abstractions. It provides:
 - **Object-Oriented Design**: High-level OOP domain abstractions (`Resource` / `MaaResource`, `Controller` / `AdbController` / `Win32Controller`, `Tasker`, `Instance`).

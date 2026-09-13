@@ -7,16 +7,20 @@
 
 <div align="center">
   <img alt="Cangjie" src="https://img.shields.io/badge/Cangjie-LTS_1.0.5-blue?logo=cangjie">
-  <img alt="MaaFramework" src="https://img.shields.io/badge/MaaFramework-v5.x-brightgreen">
-  <img alt="License" src="https://img.shields.io/badge/License-Apache_2.0-orange">
+  <a href="https://github.com/MaaXYZ/MaaFramework/releases/tag/v5.13.0">
+    <img alt="MaaFramework" src="https://img.shields.io/badge/MaaFramework-v5.13.0-brightgreen">
+  </a>
+  <a href="LICENSE">
+    <img alt="License" src="https://img.shields.io/badge/License-Apache_2.0-orange">
+  </a>
   <img alt="Tests" src="https://img.shields.io/badge/Tests-21%2F21_Passed-success">
 </div>
 
 <br />
 
-[MaaFramework](https://github.com/MaaXYZ/MaaFramework) 的官方 **Cangjie (仓颉)** 语言绑定 SDK 框架。MaaFramework 是一个基于图像识别的高性能跨平台自动化测试与控制框架。
+[MaaFramework](https://github.com/MaaXYZ/MaaFramework) 的 **Cangjie (仓颉)** 语言社区开源绑定 SDK。MaaFramework 是一个基于图像识别的高性能跨平台自动化测试与控制框架。
 
-本 SDK 遵循 **MaaFramework 官方规范《4.2 标准化接口设计》**，为仓颉开发者提供安全、面向对象、强类型的自动化开发体验。
+本 SDK 由社区开发者与爱好者维护，严格遵循 **MaaFramework《4.2 标准化接口设计》规范**，为仓颉开发者提供安全、面向对象、强类型的自动化开发体验。
 
 > **🚀 零手动胶水代码！** 基于 [cjbind](https://github.com/cjbind/cjbind) 自动化解析 C 头文件生成强类型仓颉 FFI 绑定，下游集成无需安装 C 编译器或任何中间代码生成工具，开箱即用。
 
@@ -228,7 +232,21 @@ cjpm test --show-all-output --no-progress
 
 ---
 
+## 💖 Credits & Acknowledgements
+
+本项目在开发过程中，深受以下开源项目与社区生态的启发与支持，特此致谢：
+
+- **[MaaFramework](https://github.com/MaaXYZ/MaaFramework)** - 强大的跨平台图像识别与自动化核心，以及清晰指导本项目架构的《4.2 标准化接口设计》规范。
+- **[Cangjie Programming Language](https://cangjie-lang.cn/)** - 仓颉编程语言及官方工具链团队。
+- **[cjbind](https://github.com/cjbind/cjbind)** - 自动化 C 头文件 FFI 生成工具，实现零手动维护胶水代码。
+- **[maa-fw-go](https://github.com/MaaXYZ/maa-framework-go)** - 为本项目的强类型流水线建模、领域抽象与文档结构提供了极高价值的参考实现。
+- **[cjv](https://github.com/Zxilly/cjv)** - 优雅实用的仓颉多版本环境管理工具，大幅简化了跨平台工具链配置。
+- **[MaaAssistantArknights](https://github.com/MaaAssistantArknights/MaaAssistantArknights)** - 孕育 MaaFramework 生态的原初项目与视觉设计支持。
+
+---
+
 ## 📄 开源协议
 
 本项目采用 [Apache-2.0](LICENSE) 协议开源。
+
 
