@@ -141,4 +141,45 @@ class SdkTest {
         let devices = AdbDeviceFinder.find(adbPath: "invalid_mock_adb")
         @Assert(devices.size == 0)
     }
+
+    @TestCase
+    func testGlobalOptions(): Unit {
+        @Assert(Global.setLogDir("build/logs"))
+        @Assert(Global.setSaveDraw(false))
+        @Assert(Global.setDebugMode(false))
+        @Assert(Global.setSaveOnError(true))
+        @Assert(Global.setDrawQuality(90))
+        @Assert(Global.setRecoImageCacheLimit(2048))
+    }
+
+    @TestCase
+    func testControllerExtended(): Unit {
+        let ctrl = Win32Controller(0)
+        @Assert(ctrl.setScreenshotTargetLongSide(1280))
+        @Assert(ctrl.setScreenshotTargetShortSide(720))
+        @Assert(ctrl.setScreenshotUseRawSize(false))
+        @Assert(ctrl.setScreenshotResizeMethod(3))
+        @Assert(ctrl.setScreenshotTargetExpand(720, 1280))
+
+        let info = ctrl.getInfo()
+        @Assert(!info.isEmpty())
+
+        ctrl.destroy()
+    }
+
+    @TestCase
+    func testResourceOverridesAndDefaults(): Unit {
+        let res = MaaResource()
+        @Assert(res.overridePipeline("{\"TestNode\":{}}"))
+        @Assert(res.overrideNext("TestNode", ["Next1", "Next2"]))
+
+        let recoParam = res.getDefaultRecognitionParam("OCR")
+        @Assert(!recoParam.isEmpty())
+
+        let actParam = res.getDefaultActionParam("Click")
+        @Assert(!actParam.isEmpty())
+
+        res.destroy()
+    }
 }
+

@@ -259,6 +259,175 @@ public open class Controller {
         return (wArr[0], hArr[0])
     }
 
+    public func postScroll(dx: Int32, dy: Int32): CtrlJob {
+        if (this.handle.isNull()) {
+            return CtrlJob(this.handle, 0)
+        }
+        let id = unsafe { MaaControllerPostScroll_wrap(this.handle, dx, dy) }
+        return CtrlJob(this.handle, id)
+    }
+
+    public func postRelativeMove(dx: Int32, dy: Int32): CtrlJob {
+        if (this.handle.isNull()) {
+            return CtrlJob(this.handle, 0)
+        }
+        let id = unsafe { MaaControllerPostRelativeMove_wrap(this.handle, dx, dy) }
+        return CtrlJob(this.handle, id)
+    }
+
+    public func postInactive(): CtrlJob {
+        if (this.handle.isNull()) {
+            return CtrlJob(this.handle, 0)
+        }
+        let id = unsafe { MaaControllerPostInactive_wrap(this.handle) }
+        return CtrlJob(this.handle, id)
+    }
+
+    public func postShell(cmd: String, timeout!: Int64 = 20000): CtrlJob {
+        if (this.handle.isNull()) {
+            return CtrlJob(this.handle, 0)
+        }
+        let id = unsafe {
+            let cstr = LibC.mallocCString(cmd)
+            let ctrlId = MaaControllerPostShell_wrap(this.handle, cstr, timeout)
+            LibC.free(cstr)
+            ctrlId
+        }
+        return CtrlJob(this.handle, id)
+    }
+
+    public func getShellOutput(): String {
+        if (this.handle.isNull()) {
+            return ""
+        }
+        let buf = StringBuffer()
+        let ok = unsafe { MaaControllerGetShellOutput_wrap(this.handle, buf.raw()) != 0 }
+        let res = if (ok) { buf.get() } else { "" }
+        buf.destroy()
+        return res
+    }
+
+    public func getInfo(): String {
+        if (this.handle.isNull()) {
+            return ""
+        }
+        let buf = StringBuffer()
+        let ok = unsafe { MaaControllerGetInfo_wrap(this.handle, buf.raw()) != 0 }
+        let res = if (ok) { buf.get() } else { "" }
+        buf.destroy()
+        return res
+    }
+
+    public func setScreenshotTargetLongSide(size: Int32): Bool {
+        if (this.handle.isNull()) {
+            return false
+        }
+        unsafe {
+            let valArr: Array<Int32> = [size]
+            let rawData = acquireArrayRawData(valArr)
+            let ret = MaaControllerSetOption_wrap(
+                this.handle,
+                Int32(MaaCtrlOptionEnum_MaaCtrlOption_ScreenshotTargetLongSide),
+                CPointer<Unit>(rawData.pointer),
+                UInt64(sizeOf<Int32>())
+            )
+            releaseArrayRawData(rawData)
+            return ret != 0
+        }
+    }
+
+    public func setScreenshotTargetShortSide(size: Int32): Bool {
+        if (this.handle.isNull()) {
+            return false
+        }
+        unsafe {
+            let valArr: Array<Int32> = [size]
+            let rawData = acquireArrayRawData(valArr)
+            let ret = MaaControllerSetOption_wrap(
+                this.handle,
+                Int32(MaaCtrlOptionEnum_MaaCtrlOption_ScreenshotTargetShortSide),
+                CPointer<Unit>(rawData.pointer),
+                UInt64(sizeOf<Int32>())
+            )
+            releaseArrayRawData(rawData)
+            return ret != 0
+        }
+    }
+
+    public func setScreenshotUseRawSize(enable: Bool): Bool {
+        if (this.handle.isNull()) {
+            return false
+        }
+        unsafe {
+            let val: UInt8 = if (enable) { 1 } else { 0 }
+            let valArr: Array<UInt8> = [val]
+            let rawData = acquireArrayRawData(valArr)
+            let ret = MaaControllerSetOption_wrap(
+                this.handle,
+                Int32(MaaCtrlOptionEnum_MaaCtrlOption_ScreenshotUseRawSize),
+                CPointer<Unit>(rawData.pointer),
+                UInt64(sizeOf<UInt8>())
+            )
+            releaseArrayRawData(rawData)
+            return ret != 0
+        }
+    }
+
+    public func setMouseLockFollow(enable: Bool): Bool {
+        if (this.handle.isNull()) {
+            return false
+        }
+        unsafe {
+            let val: UInt8 = if (enable) { 1 } else { 0 }
+            let valArr: Array<UInt8> = [val]
+            let rawData = acquireArrayRawData(valArr)
+            let ret = MaaControllerSetOption_wrap(
+                this.handle,
+                Int32(MaaCtrlOptionEnum_MaaCtrlOption_MouseLockFollow),
+                CPointer<Unit>(rawData.pointer),
+                UInt64(sizeOf<UInt8>())
+            )
+            releaseArrayRawData(rawData)
+            return ret != 0
+        }
+    }
+
+    public func setScreenshotResizeMethod(method: Int32): Bool {
+        if (this.handle.isNull()) {
+            return false
+        }
+        unsafe {
+            let valArr: Array<Int32> = [method]
+            let rawData = acquireArrayRawData(valArr)
+            let ret = MaaControllerSetOption_wrap(
+                this.handle,
+                Int32(MaaCtrlOptionEnum_MaaCtrlOption_ScreenshotResizeMethod),
+                CPointer<Unit>(rawData.pointer),
+                UInt64(sizeOf<Int32>())
+            )
+            releaseArrayRawData(rawData)
+            return ret != 0
+        }
+    }
+
+    public func setScreenshotTargetExpand(width: Int32, height: Int32): Bool {
+        if (this.handle.isNull()) {
+            return false
+        }
+        unsafe {
+            let valArr: Array<Int32> = [width, height]
+            let rawData = acquireArrayRawData(valArr)
+            let ret = MaaControllerSetOption_wrap(
+                this.handle,
+                Int32(MaaCtrlOptionEnum_MaaCtrlOption_ScreenshotTargetExpand),
+                CPointer<Unit>(rawData.pointer),
+                UInt64(sizeOf<Int32>() * 2)
+            )
+            releaseArrayRawData(rawData)
+            return ret != 0
+        }
+    }
+
     public func raw(): CPointer<CMaaController> {
         return this.handle
     }

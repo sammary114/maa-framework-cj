@@ -147,6 +147,95 @@ public class MaaResource {
         return res
     }
 
+    public func overridePipeline(pipelineOverride: String): Bool {
+        if (this.handle.isNull()) {
+            return false
+        }
+        unsafe {
+            let cstr = LibC.mallocCString(pipelineOverride)
+            let ret = MaaResourceOverridePipeline_wrap(this.handle, cstr) != 0
+            LibC.free(cstr)
+            return ret
+        }
+    }
+
+    public func overrideNext(nodeName: String, nextList: Array<String>): Bool {
+        if (this.handle.isNull()) {
+            return false
+        }
+        unsafe {
+            let cNode = LibC.mallocCString(nodeName)
+            let listBuf = StringListBuffer()
+            for (item in nextList) {
+                listBuf.append(item)
+            }
+            let ret = MaaResourceOverrideNext_wrap(this.handle, cNode, listBuf.raw()) != 0
+            LibC.free(cNode)
+            listBuf.destroy()
+            return ret
+        }
+    }
+
+    public func overrideImage(imageName: String, image: ImageBuffer): Bool {
+        if (this.handle.isNull()) {
+            return false
+        }
+        unsafe {
+            let cName = LibC.mallocCString(imageName)
+            let ret = MaaResourceOverrideImage_wrap(this.handle, cName, image.raw()) != 0
+            LibC.free(cName)
+            return ret
+        }
+    }
+
+    public func getNodeData(nodeName: String): String {
+        if (this.handle.isNull()) {
+            return ""
+        }
+        let buf = StringBuffer()
+        let ok = unsafe {
+            let cNode = LibC.mallocCString(nodeName)
+            let ret = MaaResourceGetNodeData_wrap(this.handle, cNode, buf.raw()) != 0
+            LibC.free(cNode)
+            ret
+        }
+        let res = if (ok) { buf.get() } else { "" }
+        buf.destroy()
+        return res
+    }
+
+    public func getDefaultRecognitionParam(recoType: String): String {
+        if (this.handle.isNull()) {
+            return ""
+        }
+        let buf = StringBuffer()
+        let ok = unsafe {
+            let cType = LibC.mallocCString(recoType)
+            let ret = MaaResourceGetDefaultRecognitionParam_wrap(this.handle, cType, buf.raw()) != 0
+            LibC.free(cType)
+            ret
+        }
+        let res = if (ok) { buf.get() } else { "" }
+        buf.destroy()
+        return res
+    }
+
+    public func getDefaultActionParam(actionType: String): String {
+        if (this.handle.isNull()) {
+            return ""
+        }
+        let buf = StringBuffer()
+        let ok = unsafe {
+            let cType = LibC.mallocCString(actionType)
+            let ret = MaaResourceGetDefaultActionParam_wrap(this.handle, cType, buf.raw()) != 0
+            LibC.free(cType)
+            ret
+        }
+        let res = if (ok) { buf.get() } else { "" }
+        buf.destroy()
+        return res
+    }
+
     public func raw(): CPointer<CMaaResource> {
         return this.handle
     }
