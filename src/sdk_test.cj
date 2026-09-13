@@ -9,6 +9,7 @@ import maa.job.*
 import maa.core.*
 import maa.toolkit.*
 import maa.custom.*
+import std.fs.*
 
 @Test
 
@@ -240,6 +241,138 @@ class SdkTest {
         @Assert(task.taskId == 100)
         @Assert(task.nodes.size == 1)
         @Assert(task.nodes[0].name == "TestNode")
+    }
+
+    @TestCase
+    func testMaaMsgConstants(): Unit {
+        @Assert(MaaMsg.ResourceLoadingStarting == "Resource.Loading.Starting")
+        @Assert(MaaMsg.ResourceLoadingSucceeded == "Resource.Loading.Succeeded")
+        @Assert(MaaMsg.ResourceLoadingFailed == "Resource.Loading.Failed")
+
+        @Assert(MaaMsg.ControllerActionStarting == "Controller.Action.Starting")
+        @Assert(MaaMsg.ControllerActionSucceeded == "Controller.Action.Succeeded")
+        @Assert(MaaMsg.ControllerActionFailed == "Controller.Action.Failed")
+
+        @Assert(MaaMsg.TaskerTaskStarting == "Tasker.Task.Starting")
+        @Assert(MaaMsg.TaskerTaskSucceeded == "Tasker.Task.Succeeded")
+        @Assert(MaaMsg.TaskerTaskFailed == "Tasker.Task.Failed")
+
+        @Assert(MaaMsg.NodePipelineNodeStarting == "Node.PipelineNode.Starting")
+        @Assert(MaaMsg.NodePipelineNodeSucceeded == "Node.PipelineNode.Succeeded")
+        @Assert(MaaMsg.NodePipelineNodeFailed == "Node.PipelineNode.Failed")
+
+        @Assert(MaaMsg.NodeRecognitionNodeStarting == "Node.RecognitionNode.Starting")
+        @Assert(MaaMsg.NodeRecognitionNodeSucceeded == "Node.RecognitionNode.Succeeded")
+        @Assert(MaaMsg.NodeRecognitionNodeFailed == "Node.RecognitionNode.Failed")
+
+        @Assert(MaaMsg.NodeActionNodeStarting == "Node.ActionNode.Starting")
+        @Assert(MaaMsg.NodeActionNodeSucceeded == "Node.ActionNode.Succeeded")
+        @Assert(MaaMsg.NodeActionNodeFailed == "Node.ActionNode.Failed")
+
+        @Assert(MaaMsg.NodeNextListStarting == "Node.NextList.Starting")
+        @Assert(MaaMsg.NodeNextListSucceeded == "Node.NextList.Succeeded")
+        @Assert(MaaMsg.NodeNextListFailed == "Node.NextList.Failed")
+
+        @Assert(MaaMsg.NodeRecognitionStarting == "Node.Recognition.Starting")
+        @Assert(MaaMsg.NodeRecognitionSucceeded == "Node.Recognition.Succeeded")
+        @Assert(MaaMsg.NodeRecognitionFailed == "Node.Recognition.Failed")
+
+        @Assert(MaaMsg.NodeActionStarting == "Node.Action.Starting")
+        @Assert(MaaMsg.NodeActionSucceeded == "Node.Action.Succeeded")
+        @Assert(MaaMsg.NodeActionFailed == "Node.Action.Failed")
+
+        @Assert(MaaMsg.NodeWaitFreezesStarting == "Node.WaitFreezes.Starting")
+        @Assert(MaaMsg.NodeWaitFreezesSucceeded == "Node.WaitFreezes.Succeeded")
+        @Assert(MaaMsg.NodeWaitFreezesFailed == "Node.WaitFreezes.Failed")
+    }
+
+    @TestCase
+    func testSinksRegistrationAndRemoval(): Unit {
+        let res = MaaResource()
+        let sink1 = res.addSink { msg, _ => () }
+        @Assert(sink1 > 0)
+        res.removeSink(sink1)
+        res.clearSinks()
+        res.destroy()
+
+        let ctrl = Win32Controller(0)
+        let sink2 = ctrl.addSink { msg, _ => () }
+        @Assert(sink2 > 0)
+        ctrl.removeSink(sink2)
+        ctrl.clearSinks()
+        ctrl.destroy()
+
+        let tasker = Tasker()
+        let sink3 = tasker.addSink { msg, _ => () }
+        @Assert(sink3 > 0)
+        tasker.removeSink(sink3)
+
+        let ctxSink = tasker.addContextSink { msg, _ => () }
+        @Assert(ctxSink > 0)
+        tasker.removeContextSink(ctxSink)
+
+        let onStartingSink = tasker.onTaskStarting { _ => () }
+        let onSucceededSink = tasker.onTaskSucceeded { _ => () }
+        let onFailedSink = tasker.onTaskFailed { _ => () }
+        let onNodeSink = tasker.onNodeStarting { _ => () }
+        let onNodeSuccSink = tasker.onNodeSucceeded { _ => () }
+        let onNodeFailSink = tasker.onNodeFailed { _ => () }
+        @Assert(onStartingSink > 0)
+        @Assert(onSucceededSink > 0)
+        @Assert(onFailedSink > 0)
+        @Assert(onNodeSink > 0)
+        @Assert(onNodeSuccSink > 0)
+        @Assert(onNodeFailSink > 0)
+
+        tasker.clearSinks()
+        tasker.clearContextSinks()
+        tasker.destroy()
+    }
+
+    @TestCase
+    func testControllerSinksDispatch(): Unit {
+        let ctrl = Win32Controller(0)
+        let received = Array<Bool>(1, repeat: false)
+        let sinkId = ctrl.addSink { msg, details =>
+            if (msg.contains("Controller.Action")) {
+                received[0] = true
+            }
+        }
+        @Assert(sinkId > 0)
+
+        let clickJob = ctrl.postClick(100, 100)
+        clickJob.wait()
+
+        @Assert(received[0])
+
+        ctrl.removeSink(sinkId)
+        ctrl.destroy()
+    }
+
+    @TestCase
+    func testRecordAndReplayController(): Unit {
+        let baseCtrl = Win32Controller(0)
+        let recPath = "./test_record.jsonl"
+        let rec = RecordController(baseCtrl, recPath)
+        @Assert(rec.getInner() is Win32Controller)
+        @Assert(!rec.raw().isNull())
+        rec.destroy()
+        baseCtrl.destroy()
+
+        let rep = ReplayController(recPath)
+        @Assert(!rep.raw().isNull())
+        rep.destroy()
+
+        let dbg = DbgController("dummy_dir")
+        dbg.destroy()
+
+        if (exists(recPath)) {
+            remove(recPath)
+        }
+        let shotDir = "./test_record-Screenshot"
+        if (exists(shotDir)) {
+            remove(shotDir, recursive: true)
+        }
     }
 }
 

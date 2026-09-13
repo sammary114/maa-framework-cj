@@ -5,21 +5,25 @@ import maa.ffi.MaaResource as CMaaResource
 import maa.types.*
 import maa.buffer.*
 import maa.job.*
+import std.collection.HashMap
 
 public type Resource = MaaResource
 
 public class MaaResource {
     private var handle: CPointer<CMaaResource>
     private var ownsHandle: Bool
+    private var sinks: HashMap<Int64, (Int64, CPointer<Int64>)>
 
     public init() {
         this.handle = unsafe { MaaResourceCreate_wrap() }
         this.ownsHandle = true
+        this.sinks = HashMap<Int64, (Int64, CPointer<Int64>)>()
     }
 
     public init(handle: CPointer<CMaaResource>, ownsHandle!: Bool = true) {
         this.handle = handle
         this.ownsHandle = ownsHandle
+        this.sinks = HashMap<Int64, (Int64, CPointer<Int64>)>()
     }
 
     public func close(): Unit {
@@ -28,9 +32,48 @@ public class MaaResource {
 
     public func destroy(): Unit {
         if (this.ownsHandle && !this.handle.isNull()) {
+            this.clearSinks()
             unsafe { MaaResourceDestroy_wrap(this.handle) }
             this.handle = CPointer<CMaaResource>()
         }
+    }
+
+    public func addSink(sink: EventCallback): Int64 {
+        if (this.handle.isNull()) {
+            return 0
+        }
+        let (id, tokenPtr) = SinkManager.register(sink)
+        let sinkId = unsafe {
+            MaaResourceAddSink_wrap(this.handle, globalEventCallbackDispatcher, CPointer<Unit>(tokenPtr))
+        }
+        if (sinkId == 0) {
+            SinkManager.unregister(id, tokenPtr)
+            return 0
+        }
+        this.sinks[sinkId] = (id, tokenPtr)
+        return sinkId
+    }
+
+    public func removeSink(sinkId: Int64): Unit {
+        if (this.handle.isNull()) {
+            return
+        }
+        unsafe { MaaResourceRemoveSink_wrap(this.handle, sinkId) }
+        match (this.sinks.remove(sinkId)) {
+            case Some((id, tokenPtr)) => SinkManager.unregister(id, tokenPtr)
+            case None => ()
+        }
+    }
+
+    public func clearSinks(): Unit {
+        if (this.handle.isNull()) {
+            return
+        }
+        unsafe { MaaResourceClearSinks_wrap(this.handle) }
+        for ((_, (id, tokenPtr)) in this.sinks) {
+            SinkManager.unregister(id, tokenPtr)
+        }
+        this.sinks.clear()
     }
 
     public func postPath(path: String): ResJob {

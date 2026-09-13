@@ -10,8 +10,11 @@ main() {
     // 1. 打印底层引擎版本
     println(">> 引擎版本: ${Global.version()}")
 
-    // 2. 初始化 Tasker 调度器
+    // 2. 初始化 Tasker 调度器并注册事件监听
     let tasker = Tasker()
+    tasker.onTaskStarting { details => println(">> [事件回调] 任务启动: ${details}") }
+    tasker.onNodeStarting { details => println(">> [事件回调] 节点开始: ${details}") }
+    tasker.onNodeSucceeded { details => println(">> [事件回调] 节点成功: ${details}") }
 
     // 3. 查找 ADB 设备（若连接了模拟器则自动绑定）
     let devices = AdbDeviceFinder.find()

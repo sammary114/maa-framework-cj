@@ -5,6 +5,7 @@ import maa.ffi.MaaController as CMaaController
 import maa.types.*
 import maa.buffer.*
 import maa.job.*
+import std.collection.HashMap
 
 private func createAdbHandle(
     serial: String,
@@ -60,10 +61,12 @@ public type MaaController = Controller
 public open class Controller {
     protected var handle: CPointer<CMaaController>
     protected var ownsHandle: Bool
+    protected var sinks: HashMap<Int64, (Int64, CPointer<Int64>)>
 
     public init(handle: CPointer<CMaaController>, ownsHandle!: Bool = true) {
         this.handle = handle
         this.ownsHandle = ownsHandle
+        this.sinks = HashMap<Int64, (Int64, CPointer<Int64>)>()
     }
 
     public func close(): Unit {
@@ -72,9 +75,48 @@ public open class Controller {
 
     public func destroy(): Unit {
         if (this.ownsHandle && !this.handle.isNull()) {
+            this.clearSinks()
             unsafe { MaaControllerDestroy_wrap(this.handle) }
             this.handle = CPointer<CMaaController>()
         }
+    }
+
+    public func addSink(sink: EventCallback): Int64 {
+        if (this.handle.isNull()) {
+            return 0
+        }
+        let (id, tokenPtr) = SinkManager.register(sink)
+        let sinkId = unsafe {
+            MaaControllerAddSink_wrap(this.handle, globalEventCallbackDispatcher, CPointer<Unit>(tokenPtr))
+        }
+        if (sinkId == 0) {
+            SinkManager.unregister(id, tokenPtr)
+            return 0
+        }
+        this.sinks[sinkId] = (id, tokenPtr)
+        return sinkId
+    }
+
+    public func removeSink(sinkId: Int64): Unit {
+        if (this.handle.isNull()) {
+            return
+        }
+        unsafe { MaaControllerRemoveSink_wrap(this.handle, sinkId) }
+        match (this.sinks.remove(sinkId)) {
+            case Some((id, tokenPtr)) => SinkManager.unregister(id, tokenPtr)
+            case None => ()
+        }
+    }
+
+    public func clearSinks(): Unit {
+        if (this.handle.isNull()) {
+            return
+        }
+        unsafe { MaaControllerClearSinks_wrap(this.handle) }
+        for ((_, (id, tokenPtr)) in this.sinks) {
+            SinkManager.unregister(id, tokenPtr)
+        }
+        this.sinks.clear()
     }
 
     public func postConnect(): CtrlJob {
@@ -456,3 +498,57 @@ public class Win32Controller <: Controller {
         super(createWin32Handle(hwnd, screencapMethod, mouseMethod, keyboardMethod), ownsHandle: true)
     }
 }
+
+private func createDbgHandle(readPath: String): CPointer<CMaaController> {
+    unsafe {
+        let cPath = LibC.mallocCString(readPath)
+        let ptr = MaaDbgControllerCreate_wrap(cPath)
+        LibC.free(cPath)
+        ptr
+    }
+}
+
+private func createRecordHandle(inner: Controller, recordingPath: String): CPointer<CMaaController> {
+    unsafe {
+        let cPath = LibC.mallocCString(recordingPath)
+        let ptr = MaaRecordControllerCreate_wrap(inner.raw(), cPath)
+        LibC.free(cPath)
+        ptr
+    }
+}
+
+private func createReplayHandle(recordingPath: String): CPointer<CMaaController> {
+    unsafe {
+        let cPath = LibC.mallocCString(recordingPath)
+        let ptr = MaaReplayControllerCreate_wrap(cPath)
+        LibC.free(cPath)
+        ptr
+    }
+}
+
+public class DbgController <: Controller {
+    public init(readPath: String) {
+        super(createDbgHandle(readPath), ownsHandle: true)
+    }
+}
+
+public class RecordController <: Controller {
+    private var innerController: Controller
+
+    public init(inner: Controller, recordingPath: String) {
+        super(createRecordHandle(inner, recordingPath), ownsHandle: true)
+        this.innerController = inner
+    }
+
+    public func getInner(): Controller {
+        return this.innerController
+    }
+}
+
+public class ReplayController <: Controller {
+    public init(recordingPath: String) {
+        super(createReplayHandle(recordingPath), ownsHandle: true)
+    }
+}
+
+

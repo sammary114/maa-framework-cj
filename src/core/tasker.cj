@@ -8,6 +8,7 @@ import maa.types.*
 import maa.buffer.*
 import maa.job.*
 import std.collection.ArrayList
+import std.collection.HashMap
 
 public type MaaTasker = Tasker
 
@@ -16,12 +17,16 @@ public class Tasker {
     private var ownsHandle: Bool
     private var boundResource: Option<MaaResource>
     private var boundController: Option<Controller>
+    private var sinks: HashMap<Int64, (Int64, CPointer<Int64>)>
+    private var contextSinks: HashMap<Int64, (Int64, CPointer<Int64>)>
 
     public init() {
         this.handle = unsafe { MaaTaskerCreate_wrap() }
         this.ownsHandle = true
         this.boundResource = None
         this.boundController = None
+        this.sinks = HashMap<Int64, (Int64, CPointer<Int64>)>()
+        this.contextSinks = HashMap<Int64, (Int64, CPointer<Int64>)>()
     }
 
     public init(handle: CPointer<CMaaTasker>, ownsHandle!: Bool = true) {
@@ -29,6 +34,8 @@ public class Tasker {
         this.ownsHandle = ownsHandle
         this.boundResource = None
         this.boundController = None
+        this.sinks = HashMap<Int64, (Int64, CPointer<Int64>)>()
+        this.contextSinks = HashMap<Int64, (Int64, CPointer<Int64>)>()
     }
 
     public func close(): Unit {
@@ -37,11 +44,121 @@ public class Tasker {
 
     public func destroy(): Unit {
         if (this.ownsHandle && !this.handle.isNull()) {
+            this.clearSinks()
+            this.clearContextSinks()
             unsafe { MaaTaskerDestroy_wrap(this.handle) }
             this.handle = CPointer<CMaaTasker>()
         }
         this.boundResource = None
         this.boundController = None
+    }
+
+    public func addSink(sink: EventCallback): Int64 {
+        if (this.handle.isNull()) {
+            return 0
+        }
+        let (id, tokenPtr) = SinkManager.register(sink)
+        let sinkId = unsafe {
+            MaaTaskerAddSink_wrap(this.handle, globalEventCallbackDispatcher, CPointer<Unit>(tokenPtr))
+        }
+        if (sinkId == 0) {
+            SinkManager.unregister(id, tokenPtr)
+            return 0
+        }
+        this.sinks[sinkId] = (id, tokenPtr)
+        return sinkId
+    }
+
+    public func removeSink(sinkId: Int64): Unit {
+        if (this.handle.isNull()) {
+            return
+        }
+        unsafe { MaaTaskerRemoveSink_wrap(this.handle, sinkId) }
+        match (this.sinks.remove(sinkId)) {
+            case Some((id, tokenPtr)) => SinkManager.unregister(id, tokenPtr)
+            case None => ()
+        }
+    }
+
+    public func clearSinks(): Unit {
+        if (this.handle.isNull()) {
+            return
+        }
+        unsafe { MaaTaskerClearSinks_wrap(this.handle) }
+        for ((_, (id, tokenPtr)) in this.sinks) {
+            SinkManager.unregister(id, tokenPtr)
+        }
+        this.sinks.clear()
+    }
+
+    public func addContextSink(sink: EventCallback): Int64 {
+        if (this.handle.isNull()) {
+            return 0
+        }
+        let (id, tokenPtr) = SinkManager.register(sink)
+        let sinkId = unsafe {
+            MaaTaskerAddContextSink_wrap(this.handle, globalEventCallbackDispatcher, CPointer<Unit>(tokenPtr))
+        }
+        if (sinkId == 0) {
+            SinkManager.unregister(id, tokenPtr)
+            return 0
+        }
+        this.contextSinks[sinkId] = (id, tokenPtr)
+        return sinkId
+    }
+
+    public func removeContextSink(sinkId: Int64): Unit {
+        if (this.handle.isNull()) {
+            return
+        }
+        unsafe { MaaTaskerRemoveContextSink_wrap(this.handle, sinkId) }
+        match (this.contextSinks.remove(sinkId)) {
+            case Some((id, tokenPtr)) => SinkManager.unregister(id, tokenPtr)
+            case None => ()
+        }
+    }
+
+    public func clearContextSinks(): Unit {
+        if (this.handle.isNull()) {
+            return
+        }
+        unsafe { MaaTaskerClearContextSinks_wrap(this.handle) }
+        for ((_, (id, tokenPtr)) in this.contextSinks) {
+            SinkManager.unregister(id, tokenPtr)
+        }
+        this.contextSinks.clear()
+    }
+
+    public func on(event: String, callback: (details: String) -> Unit): Int64 {
+        return this.addSink { msg, details =>
+            if (msg == event) {
+                callback(details)
+            }
+        }
+    }
+
+    public func onTaskStarting(callback: (details: String) -> Unit): Int64 {
+        return this.on(MaaMsg.TaskerTaskStarting, callback)
+    }
+
+    public func onTaskSucceeded(callback: (details: String) -> Unit): Int64 {
+        return this.on(MaaMsg.TaskerTaskSucceeded, callback)
+    }
+
+    public func onTaskFailed(callback: (details: String) -> Unit): Int64 {
+        return this.on(MaaMsg.TaskerTaskFailed, callback)
+    }
+
+    public func onNodeStarting(callback: (details: String) -> Unit): Int64 {
+        return this.on(MaaMsg.NodePipelineNodeStarting, callback)
+    }
+
+    public func onNodeSucceeded(callback: (details: String) -> Unit): Int64 {
+        return this.on(MaaMsg.NodePipelineNodeSucceeded, callback)
+    }
+
+    public func onNodeFailed(callback: (details: String) -> Unit): Int64 {
+        return this.on(MaaMsg.NodePipelineNodeFailed, callback)
     }
 
     public func bind(res: MaaResource): Bool {
