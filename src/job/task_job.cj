@@ -3,6 +3,7 @@ package maa.job
 import maa.ffi.*
 import maa.types.*
 import maa.buffer.*
+import std.collection.ArrayList
 
 public class TaskJob <: Job<TaskDetail> {
     private var taskerHandle: CPointer<MaaTasker>
@@ -50,11 +51,67 @@ public class TaskJob <: Job<TaskDetail> {
             releaseArrayRawData(rawStatus)
             res
         }
+        if (ok == 0) {
+            entryBuf.destroy()
+            return None
+        }
+
+        let count = sizeArr[0]
+        let nodes = ArrayList<NodeDetail>()
+        if (count > 0) {
+            let idList: Array<Int64> = Array<Int64>(Int64(count), repeat: 0)
+            unsafe {
+                let rawList = acquireArrayRawData(idList)
+                let rawSize = acquireArrayRawData(sizeArr)
+                let rawStatus = acquireArrayRawData(statusArr)
+                MaaTaskerGetTaskDetail_wrap(
+                    this.taskerHandle,
+                    this.jobId,
+                    entryBuf.raw(),
+                    rawList.pointer,
+                    rawSize.pointer,
+                    rawStatus.pointer
+                )
+                releaseArrayRawData(rawList)
+                releaseArrayRawData(rawSize)
+                releaseArrayRawData(rawStatus)
+            }
+            for (nodeId in idList) {
+                if (nodeId == 0) {
+                    continue
+                }
+                let nameBuf = StringBuffer()
+                let recoIdArr: Array<Int64> = [0]
+                let actIdArr: Array<Int64> = [0]
+                let compArr: Array<UInt8> = [0]
+                let nodeOk = unsafe {
+                    let rawReco = acquireArrayRawData(recoIdArr)
+                    let rawAct = acquireArrayRawData(actIdArr)
+                    let rawComp = acquireArrayRawData(compArr)
+                    let cComp = CString(rawComp.pointer)
+                    let ret = MaaTaskerGetNodeDetail_wrap(
+                        this.taskerHandle,
+                        nodeId,
+                        nameBuf.raw(),
+                        rawReco.pointer,
+                        rawAct.pointer,
+                        cComp
+                    ) != 0
+                    releaseArrayRawData(rawReco)
+                    releaseArrayRawData(rawAct)
+                    releaseArrayRawData(rawComp)
+                    ret
+                }
+                let name = nameBuf.get()
+                nameBuf.destroy()
+                if (nodeOk) {
+                    nodes.add(NodeDetail(nodeId, name, recoIdArr[0], actIdArr[0], compArr[0] != 0))
+                }
+            }
+        }
+
         let entry = entryBuf.get()
         entryBuf.destroy()
-        if (ok != 0) {
-            return Some(TaskDetail(this.jobId, entry, Status.fromC(statusArr[0])))
-        }
-        return None
+        return Some(TaskDetail(this.jobId, entry, Status.fromC(statusArr[0]), nodes: nodes.toArray()))
     }
 }

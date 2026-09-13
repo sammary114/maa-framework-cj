@@ -2,11 +2,13 @@ package maa
 
 import std.unittest.*
 import std.unittest.testmacro.*
+import maa.ffi.MaaContext as CMaaContext
 import maa.types.*
 import maa.buffer.*
 import maa.job.*
 import maa.core.*
 import maa.toolkit.*
+import maa.custom.*
 
 @Test
 
@@ -181,5 +183,64 @@ class SdkTest {
 
         res.destroy()
     }
+
+    @TestCase
+    func testTaskerExtended(): Unit {
+        let tasker = Tasker()
+        @Assert(tasker.clearCache())
+        @Assert(!tasker.overridePipeline(0, "{}"))
+        @Assert(tasker.getLatestNode("NonExistent").isNone())
+        @Assert(tasker.getNodeDetail(0).isNone())
+        @Assert(tasker.getRecognitionDetail(0).isNone())
+        @Assert(tasker.getActionDetail(0).isNone())
+        @Assert(tasker.getTaskDetail(0).isNone())
+        tasker.destroy()
+    }
+
+    @TestCase
+    func testContextExtended(): Unit {
+        let ctx = Context(CPointer<CMaaContext>(), ownsHandle: false)
+        @Assert(ctx.getTaskId() == 0)
+        @Assert(ctx.getHitCount("Node") == 0)
+        @Assert(!ctx.clearHitCount("Node"))
+        @Assert(ctx.getAnchor("Anchor") == "")
+        @Assert(!ctx.setAnchor("Anchor", "Node"))
+        @Assert(!ctx.overrideNext("Node", ["Next1"]))
+        @Assert(!ctx.waitFreezes(1000, Rect(0, 0, 100, 100)))
+
+        let img = ImageBuffer()
+        @Assert(ctx.runRecognitionDirect("OCR", "{}", img) == 0)
+        img.destroy()
+
+        @Assert(ctx.runActionDirect("Click", "{}", Rect(0, 0, 10, 10), "") == 0)
+
+        let taskerFromCtx = ctx.getTasker()
+        @Assert(!taskerFromCtx.running())
+    }
+
+    @TestCase
+    func testDetailStructures(): Unit {
+        let node = NodeDetail(1, "TestNode", 10, 20, true)
+        @Assert(node.nodeId == 1)
+        @Assert(node.name == "TestNode")
+        @Assert(node.recoId == 10)
+        @Assert(node.actionId == 20)
+        @Assert(node.completed)
+
+        let reco = RecoDetail(10, "TestNode", "OCR", true, Rect(1, 2, 3, 4), "{}")
+        @Assert(reco.recoId == 10)
+        @Assert(reco.hit)
+        @Assert(reco.box.width == 3)
+
+        let act = ActionDetail(20, "TestNode", "Click", Rect(1, 2, 3, 4), true, "{}")
+        @Assert(act.actionId == 20)
+        @Assert(act.success)
+
+        let task = TaskDetail(100, "Entry", Status.Succeeded, nodes: [node])
+        @Assert(task.taskId == 100)
+        @Assert(task.nodes.size == 1)
+        @Assert(task.nodes[0].name == "TestNode")
+    }
 }
+
 

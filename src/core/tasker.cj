@@ -7,6 +7,7 @@ import maa.ffi.MaaController as CMaaController
 import maa.types.*
 import maa.buffer.*
 import maa.job.*
+import std.collection.ArrayList
 
 public type MaaTasker = Tasker
 
@@ -118,6 +119,255 @@ public class Tasker {
         }
         let st = unsafe { MaaTaskerWait_wrap(this.handle, taskId) }
         return Status.fromC(st)
+    }
+
+    public func postRecognition(recoType: String, recoParam: String, image: ImageBuffer): TaskJob {
+        if (this.handle.isNull()) {
+            return TaskJob(this.handle, 0)
+        }
+        let id = unsafe {
+            let cType = LibC.mallocCString(recoType)
+            let cParam = LibC.mallocCString(recoParam)
+            let taskId = MaaTaskerPostRecognition_wrap(this.handle, cType, cParam, image.raw())
+            LibC.free(cType)
+            LibC.free(cParam)
+            taskId
+        }
+        return TaskJob(this.handle, id)
+    }
+
+    public func postAction(actionType: String, actionParam: String, box: Rect, recoDetail: String): TaskJob {
+        if (this.handle.isNull()) {
+            return TaskJob(this.handle, 0)
+        }
+        let id = unsafe {
+            let cType = LibC.mallocCString(actionType)
+            let cParam = LibC.mallocCString(actionParam)
+            let cDetail = LibC.mallocCString(recoDetail)
+            var cBox = box.toC()
+            let boxArr = [cBox]
+            let rawBox = acquireArrayRawData(boxArr)
+            let taskId = MaaTaskerPostAction_wrap(this.handle, cType, cParam, rawBox.pointer, cDetail)
+            releaseArrayRawData(rawBox)
+            LibC.free(cType)
+            LibC.free(cParam)
+            LibC.free(cDetail)
+            taskId
+        }
+        return TaskJob(this.handle, id)
+    }
+
+    public func clearCache(): Bool {
+        if (this.handle.isNull()) {
+            return false
+        }
+        return unsafe { MaaTaskerClearCache_wrap(this.handle) != 0 }
+    }
+
+    public func overridePipeline(taskId: Int64, pipelineOverride: String): Bool {
+        if (this.handle.isNull()) {
+            return false
+        }
+        unsafe {
+            let cOverride = LibC.mallocCString(pipelineOverride)
+            let ret = MaaTaskerOverridePipeline_wrap(this.handle, taskId, cOverride) != 0
+            LibC.free(cOverride)
+            return ret
+        }
+    }
+
+    public func getLatestNode(nodeName: String): Option<Int64> {
+        if (this.handle.isNull()) {
+            return None
+        }
+        let idArr: Array<Int64> = [0]
+        let ok = unsafe {
+            let cName = LibC.mallocCString(nodeName)
+            let rawId = acquireArrayRawData(idArr)
+            let ret = MaaTaskerGetLatestNode_wrap(this.handle, cName, rawId.pointer) != 0
+            releaseArrayRawData(rawId)
+            LibC.free(cName)
+            ret
+        }
+        if (ok) {
+            return Some(idArr[0])
+        }
+        return None
+    }
+
+    public func getNodeDetail(nodeId: Int64): Option<NodeDetail> {
+        if (this.handle.isNull() || nodeId == 0) {
+            return None
+        }
+        let nameBuf = StringBuffer()
+        let recoIdArr: Array<Int64> = [0]
+        let actIdArr: Array<Int64> = [0]
+        let compArr: Array<UInt8> = [0]
+        let ok = unsafe {
+            let rawReco = acquireArrayRawData(recoIdArr)
+            let rawAct = acquireArrayRawData(actIdArr)
+            let rawComp = acquireArrayRawData(compArr)
+            let cComp = CString(rawComp.pointer)
+            let ret = MaaTaskerGetNodeDetail_wrap(
+                this.handle,
+                nodeId,
+                nameBuf.raw(),
+                rawReco.pointer,
+                rawAct.pointer,
+                cComp
+            ) != 0
+            releaseArrayRawData(rawReco)
+            releaseArrayRawData(rawAct)
+            releaseArrayRawData(rawComp)
+            ret
+        }
+        let name = nameBuf.get()
+        nameBuf.destroy()
+        if (ok) {
+            return Some(NodeDetail(nodeId, name, recoIdArr[0], actIdArr[0], compArr[0] != 0))
+        }
+        return None
+    }
+
+    public func getRecognitionDetail(recoId: Int64): Option<RecoDetail> {
+        if (this.handle.isNull() || recoId == 0) {
+            return None
+        }
+        let nameBuf = StringBuffer()
+        let algoBuf = StringBuffer()
+        let detailBuf = StringBuffer()
+        let hitArr: Array<UInt8> = [0]
+        var cBox = Rect().toC()
+        let boxArr = [cBox]
+        let rawImg = ImageBuffer()
+        let ok = unsafe {
+            let rawHit = acquireArrayRawData(hitArr)
+            let rawBox = acquireArrayRawData(boxArr)
+            let cHit = CString(rawHit.pointer)
+            let ret = MaaTaskerGetRecognitionDetail_wrap(
+                this.handle,
+                recoId,
+                nameBuf.raw(),
+                algoBuf.raw(),
+                cHit,
+                rawBox.pointer,
+                detailBuf.raw(),
+                rawImg.raw(),
+                CPointer<MaaImageListBuffer>()
+            ) != 0
+            releaseArrayRawData(rawHit)
+            releaseArrayRawData(rawBox)
+            ret
+        }
+        rawImg.destroy()
+        let name = nameBuf.get()
+        let algo = algoBuf.get()
+        let detail = detailBuf.get()
+        nameBuf.destroy()
+        algoBuf.destroy()
+        detailBuf.destroy()
+        if (ok) {
+            return Some(RecoDetail(recoId, name, algo, hitArr[0] != 0, Rect.fromC(boxArr[0]), detail))
+        }
+        return None
+    }
+
+    public func getActionDetail(actionId: Int64): Option<ActionDetail> {
+        if (this.handle.isNull() || actionId == 0) {
+            return None
+        }
+        let nameBuf = StringBuffer()
+        let actBuf = StringBuffer()
+        let detailBuf = StringBuffer()
+        let succArr: Array<UInt8> = [0]
+        var cBox = Rect().toC()
+        let boxArr = [cBox]
+        let ok = unsafe {
+            let rawSucc = acquireArrayRawData(succArr)
+            let rawBox = acquireArrayRawData(boxArr)
+            let cSucc = CString(rawSucc.pointer)
+            let ret = MaaTaskerGetActionDetail_wrap(
+                this.handle,
+                actionId,
+                nameBuf.raw(),
+                actBuf.raw(),
+                rawBox.pointer,
+                cSucc,
+                detailBuf.raw()
+            ) != 0
+            releaseArrayRawData(rawSucc)
+            releaseArrayRawData(rawBox)
+            ret
+        }
+        let name = nameBuf.get()
+        let act = actBuf.get()
+        let detail = detailBuf.get()
+        nameBuf.destroy()
+        actBuf.destroy()
+        detailBuf.destroy()
+        if (ok) {
+            return Some(ActionDetail(actionId, name, act, Rect.fromC(boxArr[0]), succArr[0] != 0, detail))
+        }
+        return None
+    }
+
+    public func getTaskDetail(taskId: Int64): Option<TaskDetail> {
+        if (this.handle.isNull() || taskId == 0) {
+            return None
+        }
+        let entryBuf = StringBuffer()
+        let sizeArr: Array<UInt64> = [0]
+        let statusArr: Array<Int32> = [0]
+        let ok1 = unsafe {
+            let rawSize = acquireArrayRawData(sizeArr)
+            let rawStatus = acquireArrayRawData(statusArr)
+            let ret = MaaTaskerGetTaskDetail_wrap(
+                this.handle,
+                taskId,
+                entryBuf.raw(),
+                CPointer<MaaNodeId>(),
+                rawSize.pointer,
+                rawStatus.pointer
+            ) != 0
+            releaseArrayRawData(rawSize)
+            releaseArrayRawData(rawStatus)
+            ret
+        }
+        if (!ok1) {
+            entryBuf.destroy()
+            return None
+        }
+
+        let count = sizeArr[0]
+        let nodes = ArrayList<NodeDetail>()
+        if (count > 0) {
+            let idList: Array<Int64> = Array<Int64>(Int64(count), repeat: 0)
+            unsafe {
+                let rawList = acquireArrayRawData(idList)
+                let rawSize = acquireArrayRawData(sizeArr)
+                let rawStatus = acquireArrayRawData(statusArr)
+                MaaTaskerGetTaskDetail_wrap(
+                    this.handle,
+                    taskId,
+                    entryBuf.raw(),
+                    rawList.pointer,
+                    rawSize.pointer,
+                    rawStatus.pointer
+                )
+                releaseArrayRawData(rawList)
+                releaseArrayRawData(rawSize)
+                releaseArrayRawData(rawStatus)
+            }
+            for (nodeId in idList) {
+                if (let Some(node) <- this.getNodeDetail(nodeId)) {
+                    nodes.add(node)
+                }
+            }
+        }
+
+        let entry = entryBuf.get()
+        entryBuf.destroy()
+        return Some(TaskDetail(taskId, entry, Status.fromC(statusArr[0]), nodes: nodes.toArray()))
     }
 
     public func getResource(): Option<MaaResource> {
