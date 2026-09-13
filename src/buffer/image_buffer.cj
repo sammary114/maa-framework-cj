@@ -2,6 +2,7 @@ package maa.buffer
 
 import maa.ffi.*
 import std.collection.*
+import std.fs.*
 
 public class ImageBuffer {
     private var handle: CPointer<MaaImageBuffer>
@@ -84,7 +85,41 @@ public class ImageBuffer {
         return unsafe { MaaImageBufferGetEncodedSize_wrap(this.handle) }
     }
 
+    public func getEncoded(): Array<Byte> {
+        if (this.handle.isNull()) {
+            return Array<Byte>()
+        }
+        let size = Int64(unsafe { MaaImageBufferGetEncodedSize_wrap(this.handle) })
+        if (size <= 0) {
+            return Array<Byte>()
+        }
+        let ptr = unsafe { MaaImageBufferGetEncoded_wrap(this.handle) }
+        if (ptr.isNull()) {
+            return Array<Byte>()
+        }
+        let bytes = Array<Byte>(size, repeat: 0)
+        let charPtr = ptr.getChars()
+        for (i in 0..size) {
+            bytes[i] = unsafe { (charPtr + i).read() }
+        }
+        return bytes
+    }
+
+    public func save(path: String): Bool {
+        let bytes = this.getEncoded()
+        if (bytes.isEmpty()) {
+            return false
+        }
+        try {
+            File.writeTo(path, bytes)
+            return true
+        } catch (_: Exception) {
+            return false
+        }
+    }
+
     public func raw(): CPointer<MaaImageBuffer> {
         return this.handle
     }
 }
+

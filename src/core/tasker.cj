@@ -7,6 +7,7 @@ import maa.ffi.MaaController as CMaaController
 import maa.types.*
 import maa.buffer.*
 import maa.job.*
+import maa.pipeline.*
 import std.collection.ArrayList
 import std.collection.HashMap
 
@@ -200,6 +201,10 @@ public class Tasker {
         return TaskJob(this.handle, id)
     }
 
+    public func postTask(entry: String, pipeline: Pipeline): TaskJob {
+        return this.postTask(entry, pipelineOverride: pipeline.toJson())
+    }
+
     public func postStop(): TaskJob {
         if (this.handle.isNull()) {
             return TaskJob(this.handle, 0)
@@ -253,6 +258,10 @@ public class Tasker {
         return TaskJob(this.handle, id)
     }
 
+    public func postRecognition(reco: Recognition, image: ImageBuffer): TaskJob {
+        return this.postRecognition(reco.typeName, reco.paramJson, image)
+    }
+
     public func postAction(actionType: String, actionParam: String, box: Rect, recoDetail: String): TaskJob {
         if (this.handle.isNull()) {
             return TaskJob(this.handle, 0)
@@ -274,6 +283,10 @@ public class Tasker {
         return TaskJob(this.handle, id)
     }
 
+    public func postAction(act: Action, box: Rect, recoDetail!: String = ""): TaskJob {
+        return this.postAction(act.typeName, act.paramJson, box, recoDetail)
+    }
+
     public func clearCache(): Bool {
         if (this.handle.isNull()) {
             return false
@@ -291,6 +304,10 @@ public class Tasker {
             LibC.free(cOverride)
             return ret
         }
+    }
+
+    public func overridePipeline(taskId: Int64, pipeline: Pipeline): Bool {
+        return this.overridePipeline(taskId, pipeline.toJson())
     }
 
     public func getLatestNode(nodeName: String): Option<Int64> {

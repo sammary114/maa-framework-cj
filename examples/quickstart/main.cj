@@ -1,6 +1,7 @@
 package quickstart
 
 import maa.*
+import std.fs.*
 
 main() {
     println("==========================================")
@@ -58,6 +59,13 @@ main() {
             match (ctrl.cachedImage()) {
                 case Some(img) =>
                     println(">> 成功获取真机图像！尺寸: ${img.width()}x${img.height()}，空状态: ${img.isEmpty()}")
+                    let savePath = "screenshot.png"
+                    if (img.save(savePath)) {
+                        let absPath = canonicalize(savePath).toString()
+                        println(">> 真机截图已保存，绝对路径: ${absPath}")
+                    } else {
+                        println(">> 图像保存失败")
+                    }
                     img.destroy()
                 case None => println(">> 未获取到截屏图像")
             }

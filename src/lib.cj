@@ -6,3 +6,5 @@ public import maa.job.*
 public import maa.core.*
 public import maa.custom.*
 public import maa.toolkit.*
+public import maa.pipeline.*
+

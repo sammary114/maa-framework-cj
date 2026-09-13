@@ -17,6 +17,7 @@ debug/
 log/
 temp/
 *.log
+*.png
 
 # Third-party downloaded headers or binaries
 deps/

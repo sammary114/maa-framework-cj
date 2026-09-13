@@ -130,6 +130,11 @@ maa-framework-cj/
 │   │   ├── context.cj          # Context (runtime execution context)
 │   │   ├── custom_action.cj    # CustomAction abstract class
 │   │   └── custom_recognition.cj# CustomRecognition abstract class
+│   ├── pipeline/
+│   │   ├── pipeline.cj         # Pipeline container & JSON serializer
+│   │   ├── node.cj             # Node modeling & fluent chaining
+│   │   ├── recognition.cj      # Recognition primitives (TemplateMatch, OCR, ColorMatch, etc.)
+│   │   └── action.cj           # Action primitives (Click, Swipe, KeyClick, InputText, etc.)
 │   ├── toolkit/
 │   │   ├── adb_device_finder.cj# AdbDeviceFinder.find() -> Array<AdbDevice>
 │   │   └── desktop_window_finder.cj# DesktopWindowFinder.find() -> Array<DesktopWindow>
@@ -304,6 +309,7 @@ All Cangjie bindings strictly adhere to the official [MaaFramework Chapter 4.2 S
 | `src/types/` | Geometry, status enums, and descriptor types (`Rect`, `Point`, `Status`, `AdbDevice`, `Details`). |
 | `src/toolkit/` | Discovery utilities (`AdbDeviceFinder`, `DesktopWindowFinder`). |
 | `src/custom/` | Extensibility base classes (`Context`, `CustomAction`, `CustomRecognition`). |
+| `src/pipeline/` | Strong-typed Pipeline & Node modeling system (`Pipeline`, `Node`, `Recognition`, `Action`). |
 | `src/lib.cj` | Root module re-exporting all high-level modules for consumer applications. |
 | `src/sdk_test.cj` | Comprehensive SDK unit tests executed with `cjpm test`. |
 | `examples/quickstart/` | Working standalone example application demonstrating the high-level API. |
@@ -339,8 +345,20 @@ All Cangjie bindings strictly adhere to the official [MaaFramework Chapter 4.2 S
   7. `testResourceLifecycle`: Verifies `MaaResource` creation, loaded state check, hash query, and destruction.
   8. `testTaskerLifecycle`: Verifies `Tasker` creation, binding to `MaaResource`, running state check, and destruction.
   9. `testAdbDeviceFinderScan`: Verifies `AdbDeviceFinder.find()` execution and device enumeration.
+  10. `testGlobalOptions`: Verifies granular option setters on `Global`.
+  11. `testControllerExtended`: Verifies screencap target parameters and info retrieval on `Controller`.
+  12. `testResourceOverridesAndDefaults`: Verifies pipeline override and default recognizer/action param query on `Resource`.
+  13. `testTaskerExtended`: Verifies cache clear, latest node, and structured details query on `Tasker`.
+  14. `testContextExtended`: Verifies hit count, anchor, override next, freeze detection, and direct reco/action on `Context`.
+  15. `testDetailStructures`: Verifies `NodeDetail`, `RecoDetail`, `ActionDetail`, and `TaskDetail` object model.
+  16. `testMaaMsgConstants`: Verifies `MaaMsg` string event constants parity with native C headers.
+  17. `testSinksRegistrationAndRemoval`: Verifies thread-safe registration, token allocation, and cleanup of sinks in `Tasker` and `Resource`.
+  18. `testControllerSinksDispatch`: Verifies controller action event dispatch to registered event callbacks.
+  19. `testRecordAndReplayController`: Verifies `RecordController`, `ReplayController`, and `DbgController` lifecycle.
+  20. `testPipelineBuilder`: Verifies fluent construction of nodes (`templateMatch`, `ocr`, `click`, `swipe`, etc.) and JSON serialization.
+  21. `testPipelineIntegration`: Verifies `Resource.overridePipeline(pipeline)` and `Tasker.postTask(entry, pipeline)` execution.
 - **QA Expectations**:
-  - Maintain 100% test pass rate across the test suite (`TOTAL: 9, PASSED: 9, FAILED: 0`).
+  - Maintain 100% test pass rate across the test suite (`TOTAL: 21, PASSED: 21, FAILED: 0`).
   - Keep `src/ffi/maa_ffi.cj` synchronized with upstream MaaFramework C headers.
   - Enforce strict RAII memory safety—ensure all native handles are released without memory leaks.
 

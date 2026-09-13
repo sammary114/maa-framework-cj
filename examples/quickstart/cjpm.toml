@@ -5,7 +5,7 @@ version = "0.1.0"
 output-type = "executable"
 src-dir = "."
 target-dir = "build"
-link-option = "-L ../../deps/lib -l MaaFramework -l MaaToolkit -L ../../build/release/maa -l maa.core -l maa.job -l maa.buffer -l maa.toolkit -l maa.types -l maa.custom -l maa.ffi -l maa"
+link-option = "-L ../../deps/lib -l MaaFramework -l MaaToolkit -L ../../build/release/maa -l maa.core -l maa.job -l maa.pipeline -l maa.buffer -l maa.toolkit -l maa.types -l maa.custom -l maa.ffi -l maa"
 
 [dependencies]
 maa = { path = "../../" }

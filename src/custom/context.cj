@@ -5,6 +5,8 @@ import maa.ffi.MaaTasker as CMaaTasker
 import maa.types.*
 import maa.buffer.*
 import maa.core.*
+import maa.pipeline.*
+
 
 public class Context {
     private var handle: CPointer<MaaContext>
@@ -30,6 +32,10 @@ public class Context {
         }
     }
 
+    public func runTask(entry: String, pipeline: Pipeline): Int64 {
+        return this.runTask(entry, pipelineOverride: pipeline.toJson())
+    }
+
     public func runRecognition(entry: String, image: ImageBuffer, pipelineOverride!: String = ""): Int64 {
         if (this.handle.isNull()) {
             return 0
@@ -43,6 +49,10 @@ public class Context {
             LibC.free(cOverride)
             return res
         }
+    }
+
+    public func runRecognition(entry: String, image: ImageBuffer, pipeline: Pipeline): Int64 {
+        return this.runRecognition(entry, image, pipelineOverride: pipeline.toJson())
     }
 
     public func runAction(entry: String, box: Rect, recoDetail: String, pipelineOverride!: String = ""): Int64 {
@@ -66,6 +76,10 @@ public class Context {
         }
     }
 
+    public func runAction(entry: String, box: Rect, recoDetail: String, pipeline: Pipeline): Int64 {
+        return this.runAction(entry, box, recoDetail, pipelineOverride: pipeline.toJson())
+    }
+
     public func overridePipeline(pipelineOverride: String): Bool {
         if (this.handle.isNull()) {
             return false
@@ -76,6 +90,10 @@ public class Context {
             LibC.free(cOverride)
             return res
         }
+    }
+
+    public func overridePipeline(pipeline: Pipeline): Bool {
+        return this.overridePipeline(pipeline.toJson())
     }
 
     public func overrideImage(imageName: String, image: ImageBuffer): Bool {
@@ -135,6 +153,10 @@ public class Context {
         }
     }
 
+    public func runRecognitionDirect(reco: Recognition, image: ImageBuffer): Int64 {
+        return this.runRecognitionDirect(reco.typeName, reco.paramJson, image)
+    }
+
     public func runActionDirect(actionType: String, actionParam: String, box: Rect, recoDetail: String): Int64 {
         if (this.handle.isNull()) {
             return 0
@@ -153,6 +175,10 @@ public class Context {
             LibC.free(cDetail)
             return id
         }
+    }
+
+    public func runActionDirect(act: Action, box: Rect, recoDetail!: String = ""): Int64 {
+        return this.runActionDirect(act.typeName, act.paramJson, box, recoDetail)
     }
 
     public func waitFreezes(time: UInt64, box: Rect, param!: String = "{}"): Bool {

@@ -9,6 +9,7 @@ import maa.job.*
 import maa.core.*
 import maa.toolkit.*
 import maa.custom.*
+import maa.pipeline.*
 import std.fs.*
 
 @Test
@@ -373,6 +374,86 @@ class SdkTest {
         if (exists(shotDir)) {
             remove(shotDir, recursive: true)
         }
+    }
+
+    @TestCase
+    func testPipelineBuilder(): Unit {
+        let pipeline = Pipeline()
+        pipeline.node("Entry")
+            .templateMatch("btn.png", roi: Rect(10, 20, 100, 50), threshold: 0.85)
+            .click()
+            .next(["NextNode"])
+            .rateLimit(500)
+            .timeout(10000)
+
+        pipeline.node("NextNode")
+            .ocr(expected: ["Start", "Go"], roi: Rect(0, 0, 200, 100))
+            .swipe(100, 200, 100, 500, duration: 300)
+            .onError(["FailNode"])
+
+        pipeline.node("FailNode")
+            .directHit()
+            .doNothing()
+
+        @Assert(pipeline.size() == 3)
+        @Assert(pipeline.get("Entry").isSome())
+        @Assert(pipeline.get("NextNode").isSome())
+        @Assert(pipeline.get("FailNode").isSome())
+        @Assert(pipeline.get("NonExistent").isNone())
+
+        let json = pipeline.toJson()
+        @Assert(json.contains("\"Entry\":"))
+        @Assert(json.contains("\"TemplateMatch\""))
+        @Assert(json.contains("\"btn.png\""))
+        @Assert(json.contains("\"roi\":[10,20,100,50]"))
+        @Assert(json.contains("\"threshold\":0.85"))
+        @Assert(json.contains("\"Click\""))
+        @Assert(json.contains("\"next\":[\"NextNode\"]"))
+        @Assert(json.contains("\"rate_limit\":500"))
+        @Assert(json.contains("\"OCR\""))
+        @Assert(json.contains("\"expected\":[\"Start\",\"Go\"]"))
+        @Assert(json.contains("\"Swipe\""))
+        @Assert(json.contains("\"on_error\":[\"FailNode\"]"))
+        @Assert(json.contains("\"DirectHit\""))
+        @Assert(json.contains("\"DoNothing\""))
+    }
+
+    @TestCase
+    func testPipelineIntegration(): Unit {
+        let pipeline = Pipeline()
+        pipeline.node("StartApp")
+            .directHit()
+            .doNothing()
+            .next(["HomeNode"])
+
+        pipeline.node("HomeNode")
+            .directHit()
+            .doNothing()
+
+        let res = MaaResource()
+        let ok = res.overridePipeline(pipeline)
+        @Assert(ok)
+
+        let nodes = res.getNodeList()
+        @Assert(nodes.contains("StartApp"))
+        @Assert(nodes.contains("HomeNode"))
+
+        let tasker = Tasker()
+        @Assert(tasker.bind(res))
+        let ctrl = Win32Controller(0)
+        let connSt = ctrl.postConnect().wait()
+        @Assert(connSt.isSucceeded())
+        @Assert(tasker.bind(ctrl))
+        @Assert(tasker.inited())
+
+        let job = tasker.postTask("StartApp", pipeline)
+        @Assert(job.id() > 0)
+        let st = job.wait()
+        @Assert(st.isDone())
+
+        tasker.destroy()
+        res.destroy()
+        ctrl.destroy()
     }
 }
 

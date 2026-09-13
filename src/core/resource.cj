@@ -5,6 +5,7 @@ import maa.ffi.MaaResource as CMaaResource
 import maa.types.*
 import maa.buffer.*
 import maa.job.*
+import maa.pipeline.*
 import std.collection.HashMap
 
 public type Resource = MaaResource
@@ -200,6 +201,10 @@ public class MaaResource {
             LibC.free(cstr)
             return ret
         }
+    }
+
+    public func overridePipeline(pipeline: Pipeline): Bool {
+        return this.overridePipeline(pipeline.toJson())
     }
 
     public func overrideNext(nodeName: String, nextList: Array<String>): Bool {
