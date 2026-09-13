@@ -343,3 +343,12 @@ All Cangjie bindings strictly adhere to the official [MaaFramework Chapter 4.2 S
   - Maintain 100% test pass rate across the test suite (`TOTAL: 9, PASSED: 9, FAILED: 0`).
   - Keep `src/ffi/maa_ffi.cj` synchronized with upstream MaaFramework C headers.
   - Enforce strict RAII memory safety—ensure all native handles are released without memory leaks.
+
+---
+
+## Git Workflow Preferences
+
+- **Review & Confirm Mode (确认后提交模式)**:
+  - 每当一个阶段性工作验证完成，主动向用户汇报总结改动、验证结果，并提供规范的 Commit Message。
+  - 等待用户确认（如回复“提交”/“commit”）后，再执行 `git commit`。
+
