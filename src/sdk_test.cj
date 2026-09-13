@@ -7,12 +7,14 @@ import maa.buffer.*
 import maa.job.*
 import maa.core.*
 import maa.toolkit.*
+
 @Test
+
 class SdkTest {
     @TestCase
     func testGlobalVersion(): Unit {
+        Global.setStdoutLevel(LoggingLevel.Off)
         let ver = Global.version()
-        println(">> SDK Test: MaaFramework Version = ${ver}")
         @Assert(!ver.isEmpty())
         @Assert(ver.startsWith("v"))
     }
@@ -130,10 +132,13 @@ class SdkTest {
 
     @TestCase
     func testAdbDeviceFinderScan(): Unit {
-        let devices = AdbDeviceFinder.find()
-        println(">> Scanned ADB devices count: ${devices.size}")
-        for (dev in devices) {
-            println("   - Device: ${dev}")
-        }
+        // 验证 AdbDevice 数据结构与查找器接口
+        let dev = AdbDevice("MockDevice", "mock_adb", "127.0.0.1:5555", "127.0.0.1:5555", "{}", 0, 0, "ADB")
+        @Assert(!dev.name.isEmpty())
+        @Assert(!dev.adbPath.isEmpty())
+        @Assert(!dev.serial.isEmpty())
+
+        let devices = AdbDeviceFinder.find(adbPath: "invalid_mock_adb")
+        @Assert(devices.size == 0)
     }
 }

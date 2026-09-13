@@ -34,11 +34,12 @@ public class AdbDeviceFinder {
             let devPtr = unsafe { MaaToolkitAdbDeviceListAt_wrap(listHandle, i) }
             if (!devPtr.isNull()) {
                 let name = unsafe { MaaToolkitAdbDeviceGetName_wrap(devPtr).toString() }
+                let adbPath = unsafe { MaaToolkitAdbDeviceGetAdbPath_wrap(devPtr).toString() }
                 let address = unsafe { MaaToolkitAdbDeviceGetAddress_wrap(devPtr).toString() }
                 let config = unsafe { MaaToolkitAdbDeviceGetConfig_wrap(devPtr).toString() }
                 let screencap = unsafe { MaaToolkitAdbDeviceGetScreencapMethods_wrap(devPtr) }
                 let input = unsafe { MaaToolkitAdbDeviceGetInputMethods_wrap(devPtr) }
-                result.add(AdbDevice(name, address, address, config, screencap, input, "ADB"))
+                result.add(AdbDevice(name, adbPath, address, address, config, screencap, input, "ADB"))
             }
         }
 

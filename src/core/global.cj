@@ -17,4 +17,18 @@ public class Global {
             return ret != 0
         }
     }
+
+    public static func setStdoutLevel(level: LoggingLevel): Bool {
+        unsafe {
+            let valArr: Array<Int32> = [level.toC()]
+            let rawData = acquireArrayRawData(valArr)
+            let ret = MaaGlobalSetOption_wrap(
+                Int32(MaaGlobalOptionEnum_MaaGlobalOption_StdoutLevel),
+                CPointer<Unit>(rawData.pointer),
+                UInt64(sizeOf<Int32>())
+            )
+            releaseArrayRawData(rawData)
+            return ret != 0
+        }
+    }
 }

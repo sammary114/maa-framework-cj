@@ -2,12 +2,33 @@ package maa.types
 
 public struct AdbDevice <: ToString {
     public var name: String
+    public var adbPath: String
     public var serial: String
     public var address: String
     public var config: String
     public var screencapMethods: UInt64
     public var inputMethods: UInt64
     public var type_: String
+
+    public init(
+        name: String,
+        adbPath: String,
+        serial: String,
+        address: String,
+        config: String,
+        screencapMethods: UInt64,
+        inputMethods: UInt64,
+        type_: String
+    ) {
+        this.name = name
+        this.adbPath = adbPath
+        this.serial = serial
+        this.address = address
+        this.config = config
+        this.screencapMethods = screencapMethods
+        this.inputMethods = inputMethods
+        this.type_ = type_
+    }
 
     public init(
         name: String,
@@ -18,17 +39,12 @@ public struct AdbDevice <: ToString {
         inputMethods: UInt64,
         type_: String
     ) {
-        this.name = name
-        this.serial = serial
-        this.address = address
-        this.config = config
-        this.screencapMethods = screencapMethods
-        this.inputMethods = inputMethods
-        this.type_ = type_
+        this(name, "", serial, address, config, screencapMethods, inputMethods, type_)
     }
 
     public init() {
         this.name = ""
+        this.adbPath = ""
         this.serial = ""
         this.address = ""
         this.config = ""
@@ -38,7 +54,7 @@ public struct AdbDevice <: ToString {
     }
 
     public func toString(): String {
-        return "AdbDevice(name: '${name}', serial: '${serial}', address: '${address}', type: '${type_}')"
+        return "AdbDevice(name: '${name}', adbPath: '${adbPath}', serial: '${serial}', address: '${address}', type: '${type_}')"
     }
 }
 

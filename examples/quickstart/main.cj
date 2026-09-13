@@ -18,17 +18,47 @@ main() {
     if (devices.isEmpty()) {
         println(">> 未检测到运行中的 ADB 设备/模拟器 (跳过设备连接)")
     } else {
-        let device = devices[0]
-        println(">> 发现设备: ${device.name} [${device.serial}]")
+        for (i in 0..devices.size) {
+            println(">> 候选设备 [${i}]: ${devices[i]}")
+        }
 
+        // 优先选择包含有效 adbPath 的设备配置
+        var targetDev = devices[0]
+        for (dev in devices) {
+            if (!dev.adbPath.isEmpty()) {
+                targetDev = dev
+                break
+            }
+        }
+
+        println(">> 正在连接目标设备: ${targetDev.name} [${targetDev.serial}]")
+        let adbExec = if (targetDev.adbPath.isEmpty()) { "adb" } else { targetDev.adbPath }
         let ctrl = AdbController(
-            device.serial,
-            device.config,
-            adbPath: device.address,
-            screencapMethods: device.screencapMethods,
-            inputMethods: device.inputMethods
+            targetDev.serial,
+            targetDev.config,
+            adbPath: adbExec,
+            screencapMethods: targetDev.screencapMethods,
+            inputMethods: targetDev.inputMethods
         )
-        ctrl.postConnect().wait()
+        let connJob = ctrl.postConnect()
+        let connStatus = connJob.wait()
+        println(">> 控制器连接状态: ${connStatus}")
+        if (connStatus.isSucceeded()) {
+            println(">> 连接成功！设备 UUID: ${ctrl.getUuid()}")
+            let (w, h) = ctrl.getResolution()
+            println(">> 设备屏幕分辨率: ${w}x${h}")
+
+            // 测试真机截屏
+            let capJob = ctrl.postScreencap()
+            let capStatus = capJob.wait()
+            println(">> 截屏完成，状态: ${capStatus}")
+            match (ctrl.cachedImage()) {
+                case Some(img) =>
+                    println(">> 成功获取真机图像！尺寸: ${img.width()}x${img.height()}，空状态: ${img.isEmpty()}")
+                    img.destroy()
+                case None => println(">> 未获取到截屏图像")
+            }
+        }
         tasker.bind(ctrl)
     }
 
