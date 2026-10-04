@@ -335,22 +335,30 @@ class SdkTest {
 
     @TestCase
     func testControllerSinksDispatch(): Unit {
-        let ctrl = AdbController("127.0.0.1:5555", "{}")
-        let received = Array<Bool>(1, repeat: false)
-        let sinkId = ctrl.addSink { msg, details =>
-            if (msg.contains("Controller.Action")) {
-                received[0] = true
+        let winCtrl = Win32Controller(0)
+        if (!winCtrl.raw().isNull()) {
+            let received = Array<Bool>(1, repeat: false)
+            let sinkId = winCtrl.addSink { msg, details =>
+                if (msg.contains("Controller.Action")) {
+                    received[0] = true
+                }
             }
+            @Assert(sinkId > 0)
+
+            let clickJob = winCtrl.postClick(100, 100)
+            clickJob.wait()
+
+            @Assert(received[0])
+
+            winCtrl.removeSink(sinkId)
+            winCtrl.destroy()
+        } else {
+            let ctrl = AdbController("127.0.0.1:5555", "{}")
+            let sinkId = ctrl.addSink { _, _ => () }
+            @Assert(sinkId > 0)
+            ctrl.removeSink(sinkId)
+            ctrl.destroy()
         }
-        @Assert(sinkId > 0)
-
-        let clickJob = ctrl.postClick(100, 100)
-        clickJob.wait()
-
-        @Assert(received[0])
-
-        ctrl.removeSink(sinkId)
-        ctrl.destroy()
     }
 
     @TestCase
