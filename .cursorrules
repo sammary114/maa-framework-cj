@@ -1,0 +1,15 @@
+# Cursor Rules for maa-framework-cj
+
+This repository follows the guidelines defined in `AGENTS.md`. **The Single Source of Truth (SSOT) is `AGENTS.md`.**
+Always refer to and strictly adhere to `AGENTS.md` for project architecture, code conventions, and workflows.
+
+## Key Instructions for Cursor
+
+- **Language & Compiler**: Cangjie (仓颉) LTS 1.0.5 (`cjc`, `cjpm`).
+- **Domain Modeling**: Follow MaaFramework Chapter 4.2 Standardized Interface Design (OOP wrappers, Job handles, Buffer safety, GC retention).
+- **Disambiguation**: Use `type Resource = MaaResource` (avoid namespace collisions with `std.core.Resource`).
+- **Standard Library Query**: Use `python .agents/skills/cangjie-coding/scripts/search_docs.py` to look up exact Cangjie APIs when uncertain.
+- **Run Tests**:
+  - Windows (PowerShell): `$env:PATH = "$PWD\deps\bin;$env:PATH"; cjpm test --show-all-output --no-progress`
+  - Linux/macOS (Bash): `export LD_LIBRARY_PATH="$(pwd)/deps/bin:$(pwd)/deps/lib:${LD_LIBRARY_PATH:-}"; cjpm test --show-all-output --no-progress`
+- **Workflow**: Strictly follow **Review & Confirm Mode (确认后提交模式)**. Summarize changes and propose commit messages before executing `git commit`.
