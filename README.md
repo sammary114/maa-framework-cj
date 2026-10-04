@@ -6,6 +6,9 @@
 <h1 align="center">MaaFramework 仓颉语言绑定 (maa-framework-cj)</h1>
 
 <div align="center">
+  <a href="https://github.com/sammary114/maa-framework-cj/actions/workflows/ci.yml">
+    <img alt="CI" src="https://github.com/sammary114/maa-framework-cj/actions/workflows/ci.yml/badge.svg">
+  </a>
   <img alt="Cangjie" src="https://img.shields.io/badge/Cangjie-LTS_1.0.5-blue?logo=cangjie">
   <a href="https://github.com/MaaXYZ/MaaFramework/releases/tag/v5.13.0">
     <img alt="MaaFramework" src="https://img.shields.io/badge/MaaFramework-v5.13.0-brightgreen">
