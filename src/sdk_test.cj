@@ -158,7 +158,7 @@ class SdkTest {
 
     @TestCase
     func testControllerExtended(): Unit {
-        let ctrl = Win32Controller(0)
+        let ctrl = AdbController("127.0.0.1:5555", "{}")
         @Assert(ctrl.setScreenshotTargetLongSide(1280))
         @Assert(ctrl.setScreenshotTargetShortSide(720))
         @Assert(ctrl.setScreenshotUseRawSize(false))
@@ -169,6 +169,9 @@ class SdkTest {
         @Assert(!info.isEmpty())
 
         ctrl.destroy()
+
+        let winCtrl = Win32Controller(0)
+        winCtrl.destroy()
     }
 
     @TestCase
@@ -296,7 +299,7 @@ class SdkTest {
         res.clearSinks()
         res.destroy()
 
-        let ctrl = Win32Controller(0)
+        let ctrl = AdbController("127.0.0.1:5555", "{}")
         let sink2 = ctrl.addSink { msg, _ => () }
         @Assert(sink2 > 0)
         ctrl.removeSink(sink2)
@@ -332,7 +335,7 @@ class SdkTest {
 
     @TestCase
     func testControllerSinksDispatch(): Unit {
-        let ctrl = Win32Controller(0)
+        let ctrl = AdbController("127.0.0.1:5555", "{}")
         let received = Array<Bool>(1, repeat: false)
         let sinkId = ctrl.addSink { msg, details =>
             if (msg.contains("Controller.Action")) {
@@ -352,10 +355,10 @@ class SdkTest {
 
     @TestCase
     func testRecordAndReplayController(): Unit {
-        let baseCtrl = Win32Controller(0)
+        let baseCtrl = AdbController("127.0.0.1:5555", "{}")
         let recPath = "./test_record.jsonl"
         let rec = RecordController(baseCtrl, recPath)
-        @Assert(rec.getInner() is Win32Controller)
+        @Assert(rec.getInner() is AdbController)
         @Assert(!rec.raw().isNull())
         rec.destroy()
         baseCtrl.destroy()
@@ -440,20 +443,27 @@ class SdkTest {
 
         let tasker = Tasker()
         @Assert(tasker.bind(res))
-        let ctrl = Win32Controller(0)
-        let connSt = ctrl.postConnect().wait()
-        @Assert(connSt.isSucceeded())
-        @Assert(tasker.bind(ctrl))
-        @Assert(tasker.inited())
 
-        let job = tasker.postTask("StartApp", pipeline)
-        @Assert(job.id() > 0)
-        let st = job.wait()
-        @Assert(st.isDone())
+        let ctrl = Win32Controller(0)
+        if (!ctrl.raw().isNull()) {
+            let connSt = ctrl.postConnect().wait()
+            @Assert(connSt.isSucceeded())
+            @Assert(tasker.bind(ctrl))
+            @Assert(tasker.inited())
+
+            let job = tasker.postTask("StartApp", pipeline)
+            @Assert(job.id() > 0)
+            let st = job.wait()
+            @Assert(st.isDone())
+            ctrl.destroy()
+        } else {
+            let adbCtrl = AdbController("127.0.0.1:5555", "{}")
+            @Assert(tasker.bind(adbCtrl))
+            adbCtrl.destroy()
+        }
 
         tasker.destroy()
         res.destroy()
-        ctrl.destroy()
     }
 }
 
