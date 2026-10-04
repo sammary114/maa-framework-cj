@@ -1,4 +1,4 @@
-# Claude Code Guidelines for maa-framework-cj
+# Google Antigravity Guidelines for maa-framework-cj
 
 This repository follows standardized AI agent guidelines. **The Single Source of Truth (SSOT) is [AGENTS.md](./AGENTS.md).**
 Always read and strictly adhere to `AGENTS.md` before analyzing, editing, or testing code.

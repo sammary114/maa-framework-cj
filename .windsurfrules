@@ -7,9 +7,10 @@ Always refer to and strictly adhere to `AGENTS.md` for project architecture, cod
 
 - **Language & Compiler**: Cangjie (仓颉) LTS 1.0.5 (`cjc`, `cjpm`).
 - **Domain Modeling**: Follow MaaFramework Chapter 4.2 Standardized Interface Design (OOP wrappers, Job handles, Buffer safety, GC retention).
+- **Core Guardrails**: Zero collateral changes (do not touch unrelated files/code), full context verification (read FFI/types first), and self-contained delivery (`cjpm test` verification).
 - **Disambiguation**: Use `type Resource = MaaResource` (avoid namespace collisions with `std.core.Resource`).
 - **Standard Library Query**: Use `python .agents/skills/cangjie-coding/scripts/search_docs.py` to look up exact Cangjie APIs when uncertain.
 - **Run Tests**:
   - Windows (PowerShell): `$env:PATH = "$PWD\deps\bin;$env:PATH"; cjpm test --show-all-output --no-progress`
   - Linux/macOS (Bash): `export LD_LIBRARY_PATH="$(pwd)/deps/bin:$(pwd)/deps/lib:${LD_LIBRARY_PATH:-}"; cjpm test --show-all-output --no-progress`
-- **Workflow**: Strictly follow **Review & Confirm Mode (确认后提交模式)**. Summarize changes and propose commit messages before executing `git commit`.
+- **Workflow**: Strictly follow **Review & Confirm Mode (显式授权提交铁律)**. Summarize changes and propose commit messages before executing `git commit`.

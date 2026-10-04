@@ -242,6 +242,7 @@ cjpm test --show-all-output --no-progress
 - **[maa-fw-go](https://github.com/MaaXYZ/maa-framework-go)** - 为本项目的强类型流水线建模、领域抽象与文档结构提供了极高价值的参考实现。
 - **[cjv](https://github.com/Zxilly/cjv)** - 优雅实用的仓颉多版本环境管理工具，大幅简化了跨平台工具链配置。
 - **[setup-cangjie](https://github.com/Zxilly/setup-cangjie)** - 针对 GitHub Actions 的仓颉环境自动化配置 Action。
+- **[universal-agent-rules](https://github.com/coderluojz/universal-agent-rules)** - 为本项目的多 Agent 工程行为纪律、交付自闭环与 Harness 生态矩阵提供了通用规范参考。
 - **[MaaAssistantArknights](https://github.com/MaaAssistantArknights/MaaAssistantArknights)** - 孕育 MaaFramework 生态的原初项目与视觉设计支持。
 
 ---

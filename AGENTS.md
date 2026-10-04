@@ -240,6 +240,28 @@ cjpm run
 
 ---
 
+## Agent Guardrails & Engineering Disciplines
+
+This repository adopts the engineering principles and guardrails defined in [universal-agent-rules](https://github.com/coderluojz/universal-agent-rules):
+
+### 1. Core Philosophy
+
+- **KISS (Keep It Simple, Stupid)**: Favor flat, direct implementations. Strictly avoid unnecessary abstractions, premature design, or over-engineering.
+- **First Principles**: Analyze problems from fundamental domain mechanisms (MaaFramework Chapter 4.2 C API lifecycles and Cangjie language semantics).
+- **Fact-Based Verification**: Decisions and completion claims must be grounded in actual code inspections and terminal outputs, never speculation.
+
+### 2. High-Pressure Guardrails
+
+- **DO [Zero Collateral Changes / 零附带改动原则]**: Confine changes strictly to target files and logic.
+  - **DON'T**: Never format untouched files, reorder unrelated imports, tamper with unreferenced functions, or delete unrelated comments without explicit user request.
+- **DO [Full Context Verification / 完整上下文验证]**: Always read the target class/interface/function definition (e.g. `src/ffi/maa_ffi.cj`, `src/types/`, Cangjie stdlib docs) before writing call-sites.
+  - **DON'T**: Never hallucinate or guess struct field names, method signatures, or error codes.
+- **DO [Self-Contained Delivery / 交付自闭环铁律]**: Before reporting completion or fixing an issue, actively run `cjpm test` / `cjpm build` in the terminal and provide the real output as concrete evidence.
+  - **DON'T**: Never claim a task is completed without running verifiable automated tests or builds.
+- **DO [Atomic Incremental Progress / 原子化分步推进]**: Decompose complex tasks into small, verifiable steps. Ensure the codebase remains compilable and test-clean at each milestone.
+
+---
+
 ## Code Conventions & Common Patterns
 
 ### Naming Conventions
@@ -332,9 +354,25 @@ All Cangjie bindings strictly adhere to the official [MaaFramework Chapter 4.2 S
 - **Test Framework**: Cangjie standard unit test framework (`std.unittest`) run via `cjpm test`.
 - **Running Tests**:
   ```powershell
+  # Windows (PowerShell)
   $env:PATH = "$PWD\deps\bin;$env:PATH"
   cjpm test --show-all-output --no-progress
   ```
+  ```bash
+  # Linux / macOS (Bash)
+  export LD_LIBRARY_PATH="$(pwd)/deps/bin:$(pwd)/deps/lib:${LD_LIBRARY_PATH:-}"
+  cjpm test --show-all-output --no-progress
+  ```
+
+### Quality & Testing Standards
+
+Following [universal-agent-rules](https://github.com/coderluojz/universal-agent-rules) and Cangjie FFI best practices:
+- **AAA Pattern (Arrange - Act - Assert)**: Structure tests cleanly into preparation (setup buffers/instances), execution (post task/query), and verification (assertions).
+- **Test Isolation & Determinism (测试隔离与确定性)**:
+  - Every unit test must be completely independent and runnable in parallel or arbitrary order without cross-test state leakage.
+  - **Deterministic RAII Cleanup**: Native C handles (`MaaResource`, `Tasker`, `Controller`, `ImageBuffer`, `StringBuffer`, `StringListBuffer`) created during tests MUST be explicitly destroyed (`.destroy()` / `.close()`) before test method exit to prevent memory leaks and unreleased device locks.
+- **Boundary Defense (边界防御)**: Ensure extreme inputs (e.g. empty buffers, invalid coordinates, null C handles, zero dimensions) return safe defaults (`Status.Invalid` / empty strings / empty collections) without crashing the runtime.
+
 - **Test Coverage**:
   1. `testGlobalVersion`: Verifies native runtime version retrieval (`Global.version()`).
   2. `testGeometryTypes`: Verifies `Point` and `Rect` bi-directional conversion with C structs (`MaaRect`).
@@ -366,7 +404,29 @@ All Cangjie bindings strictly adhere to the official [MaaFramework Chapter 4.2 S
 
 ## Git Workflow Preferences
 
-- **Review & Confirm Mode (确认后提交模式)**:
-  - 每当一个阶段性工作验证完成，主动向用户汇报总结改动、验证结果，并提供规范的 Commit Message。
-  - 等待用户确认（如回复“提交”/“commit”）后，再执行 `git commit`。
+- **Review & Confirm Mode (显式授权提交铁律 / 确认后提交模式)**:
+  - AI agents are strictly prohibited from executing `git commit` or `git push` without explicit user confirmation.
+  - When a milestone or phase of work is validated, proactively report to the user with:
+    1. A summary of changes made.
+    2. Verification results (actual test/build command outputs).
+    3. A standardized Conventional Commit message.
+  - Wait for explicit user confirmation (e.g. "commit" or "提交") before executing `git commit`.
+- **Commit Message Standards**:
+  - Follow Conventional Commits format (`feat:`, `fix:`, `ci:`, `chore:`, `docs:`, `refactor:`, `test:`).
+
+---
+
+## Multi-Harness Ecosystem Matrix
+
+To ensure seamless collaboration across different AI coding harnesses, this repository provides standardized entry points referencing `AGENTS.md` as the Single Source of Truth (SSOT):
+
+| AI Harness / Client | Entry Point File | Scope & Role |
+| :--- | :--- | :--- |
+| **Universal / Default** | `AGENTS.md` | Primary Single Source of Truth (SSOT) |
+| **Google Antigravity** | `GEMINI.md` | Antigravity IDE / Gemini CLI workspace entry |
+| **Anthropic Claude Code** | `CLAUDE.md` | Claude Code CLI & projects |
+| **Cursor / OpenCode** | `.cursorrules` | Cursor IDE rules & composer |
+| **Windsurf (Codeium)** | `.windsurfrules` | Windsurf Cascade workspace rules |
+| **GitHub Copilot / Codex** | `.github/copilot-instructions.md` | VS Code & GitHub Copilot instructions |
+
 
