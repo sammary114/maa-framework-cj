@@ -241,6 +241,7 @@ cjpm test --show-all-output --no-progress
 - **[cjbind](https://github.com/cjbind/cjbind)** - 自动化 C 头文件 FFI 生成工具，实现零手动维护胶水代码。
 - **[maa-fw-go](https://github.com/MaaXYZ/maa-framework-go)** - 为本项目的强类型流水线建模、领域抽象与文档结构提供了极高价值的参考实现。
 - **[cjv](https://github.com/Zxilly/cjv)** - 优雅实用的仓颉多版本环境管理工具，大幅简化了跨平台工具链配置。
+- **[setup-cangjie](https://github.com/Zxilly/setup-cangjie)** - 针对 GitHub Actions 的仓颉环境自动化配置 Action。
 - **[MaaAssistantArknights](https://github.com/MaaAssistantArknights/MaaAssistantArknights)** - 孕育 MaaFramework 生态的原初项目与视觉设计支持。
 
 ---
