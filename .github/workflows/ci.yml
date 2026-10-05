@@ -63,41 +63,51 @@ jobs:
         if: runner.os == 'Linux' && github.ref == 'refs/heads/master' && github.event_name == 'push'
         shell: bash
         run: |
-          TOTAL=$(grep -oE "TOTAL:\s*[0-9]+" test_output.log | tail -n 1 | awk '{print $2}')
-          PASSED=$(grep -oE "PASSED:\s*[0-9]+" test_output.log | tail -n 1 | awk '{print $2}')
-          FAILED=$(grep -oE "FAILED:\s*[0-9]+" test_output.log | tail -n 1 | awk '{print $2}')
+          python3 -c '
+          import re, json, urllib.request
 
-          if [ -z "$TOTAL" ]; then TOTAL="21"; fi
-          if [ -z "$PASSED" ]; then PASSED="$TOTAL"; fi
-          if [ -z "$FAILED" ]; then FAILED="0"; fi
+          content = open("test_output.log", "r", errors="ignore").read()
+          clean = re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", content)
 
-          COLOR="brightgreen"
-          if [ "$FAILED" != "0" ]; then
-            COLOR="red"
-          fi
+          total_match = re.findall(r"TOTAL:\s*(\d+)", clean)
+          passed_match = re.findall(r"PASSED:\s*(\d+)", clean)
+          failed_match = re.findall(r"FAILED:\s*(\d+)", clean)
 
-          echo "Detected test results: $PASSED / $TOTAL passed (failed: $FAILED)"
+          total = total_match[-1] if total_match else "21"
+          passed = passed_match[-1] if passed_match else total
+          failed = failed_match[-1] if failed_match else "0"
+          color = "brightgreen" if failed == "0" else "red"
 
-          cat <<EOF > test-badge.json
-          {"schemaVersion": 1, "label": "Tests", "message": "${PASSED}/${TOTAL} Passed", "color": "${COLOR}"}
-          EOF
-
-          curl -sL "https://img.shields.io/badge/Tests-${PASSED}%2F${TOTAL}_Passed-${COLOR}" -o tests.svg
-
-          git clone --branch badges --single-branch --depth 1 "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" badges_dir || {
-            git clone --depth 1 "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" badges_dir
-            cd badges_dir
-            git checkout --orphan badges
-            cd ..
+          badge_data = {
+              "schemaVersion": 1,
+              "label": "Tests",
+              "message": f"{passed}/{total} Passed",
+              "color": color
           }
 
+          with open("test-badge.json", "w") as f:
+              json.dump(badge_data, f, indent=2)
+
+          url = f"https://img.shields.io/badge/Tests-{passed}%2F{total}_Passed-{color}"
+          req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+          with urllib.request.urlopen(req) as resp, open("tests.svg", "wb") as out:
+              out.write(resp.read())
+
+          print(f"Generated test badge: {passed}/{total} Passed (color: {color})")
+          '
+
+          git clone --branch badges --single-branch --depth 1 "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" badges_dir
           cp test-badge.json tests.svg badges_dir/
           cd badges_dir
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add test-badge.json tests.svg
-          git commit -m "ci: auto-update test badge (${PASSED}/${TOTAL} Passed) [skip ci]" || true
-          git push origin badges
+          if ! git diff --staged --quiet; then
+            git commit -m "ci: auto-update test badge [skip ci]"
+            git push origin badges
+          else
+            echo "Badges up to date, skipping commit."
+          fi
 
       - name: Build Quickstart Example (Windows)
         if: runner.os == 'Windows'
