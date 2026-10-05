@@ -16,7 +16,9 @@
   <a href="LICENSE">
     <img alt="License" src="https://img.shields.io/badge/License-Apache_2.0-orange">
   </a>
-  <img alt="Tests" src="https://img.shields.io/badge/Tests-21%2F21_Passed-success">
+  <a href="https://github.com/sammary114/maa-framework-cj/actions/workflows/ci.yml">
+    <img alt="Tests" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sammary114/maa-framework-cj/badges/test-badge.json">
+  </a>
 </div>
 
 <br />
