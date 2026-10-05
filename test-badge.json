@@ -1,1 +1,6 @@
-{"schemaVersion": 1, "label": "Tests", "message": "21/21 Passed", "color": "brightgreen"}
+{
+  "schemaVersion": 1,
+  "label": "Tests",
+  "message": "21/21 Passed",
+  "color": "brightgreen"
+}
